@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>679</width>
-    <height>133</height>
+    <width>560</width>
+    <height>152</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,14 +17,14 @@
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>10</x>
       <y>0</y>
-      <width>621</width>
-      <height>82</height>
+      <width>549</width>
+      <height>91</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0" colspan="2">
+     <item row="0" column="0" colspan="4">
       <widget class="QLabel" name="label">
        <property name="font">
         <font>
@@ -43,16 +43,47 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QLineEdit" name="lineEdit">
+     <item row="1" column="2">
+      <widget class="QComboBox" name="comboBox">
        <property name="font">
         <font>
          <pointsize>11</pointsize>
         </font>
        </property>
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <property name="currentText">
+        <string>JSON (*.json)</string>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>JSON (*.json)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Документ (разделитель - ;) (*.txt)</string>
+        </property>
+       </item>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Имя файла</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="3">
       <widget class="QPushButton" name="pushButton_2">
        <property name="enabled">
         <bool>true</bool>
@@ -69,7 +100,16 @@
         </font>
        </property>
        <property name="text">
-        <string>Открыть</string>
+        <string>Открыть и построить</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
        </property>
       </widget>
      </item>
@@ -81,7 +121,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>679</width>
+     <width>560</width>
      <height>26</height>
     </rect>
    </property>
@@ -91,22 +131,17 @@
     </font>
    </property>
    <widget class="QMenu" name="menu">
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="open_action"/>
+    <addaction name="action"/>
    </widget>
    <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="open_action">
+  <action name="action">
    <property name="text">
-    <string>Открыть файл</string>
+    <string>Выбрать файл</string>
    </property>
   </action>
  </widget>
