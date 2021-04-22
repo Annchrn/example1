@@ -16,6 +16,7 @@ SOURCES += \
 
 
 HEADERS += \
+    data_structure.h \
     mainwindow.h \
     readdata.h \
 

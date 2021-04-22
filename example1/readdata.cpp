@@ -1,4 +1,5 @@
 #include "readdata.h"
+
 #include <QFile>
 #include <QMessageBox>
 #include <QMap>
@@ -11,13 +12,14 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <QRegularExpression>
 
-ReadData::ReadData(const QString& new_filename, const QString& new_combo_box_value)  //конструктор
+
+ReadData::ReadData(const QString& new_filename)  //конструктор
 {
     filename = new_filename;
     QStringList list = filename.split(".");
     file_type = list.at(list.count()-1);
-    combo_box_value = new_combo_box_value;
 }
 
 //Функция открытия файла
@@ -29,10 +31,7 @@ bool ReadData::file_open(){
 
             if (file.exists()){
                 if (file.open(QIODevice::ReadOnly)){ // если файл существует и открылся для чтения
-                     if((file_type == "txt" && combo_box_value == "Документ (разделитель - ;) (*.txt)")
-                             || (file_type == "json" && combo_box_value == "JSON (*.json)")){
-                         return true;
-                     } else{throw std::runtime_error("Выберите верный формат");}
+                           return true;
                    } else {throw std::runtime_error("Не удалось открыть файл");}
              } else {throw std::runtime_error("Файл не существует");}
             file.close();
@@ -44,8 +43,9 @@ bool ReadData::file_open(){
 }
 
 //Функция чтения файла формата json
-//ссылку на массив вершин графика
-void ReadData::file_read_json(QMap<QDateTime, int>& values){
+//принимает ссылку на массив вершин графика
+QMap<QDate, int> ReadData::file_read_json(){
+        QMap<QDate, int> values;
         QFile file(filename);
         file.open(QIODevice::ReadOnly);
 
@@ -65,11 +65,11 @@ void ReadData::file_read_json(QMap<QDateTime, int>& values){
 
                 QString string_date = obj["Date"].toString();
                 QStringList date_values = string_date.split("/");
-                QDateTime date;
-                date.setDate(QDate(date_values[0].toInt(), date_values[1].toInt(), date_values[2].toInt()));
+                QDate date;
+                date.setDate(date_values[0].toInt(), date_values[1].toInt(), date_values[2].toInt());
 
                 QString string_number = obj["Value"].toString();
-                int number = string_number.toInt(); //int number = obj["Value"].toInt();
+                int number = string_number.toInt(); // int number = obj["Value"].toInt();
 
                 values[date] = number;
             }
@@ -77,46 +77,75 @@ void ReadData::file_read_json(QMap<QDateTime, int>& values){
             QMessageBox::critical(0, "Ошибка", ex.what());
         }
         file.close();
+        return std::move(values);
 }
 
-//Функция чтения файла формата txt
-//ссылку на массив вершин графика
-void ReadData::file_read_txt(QMap<QDateTime, int>& values){
+//Функция чтения лог-файла в формате txt
+// возвращает вектор структур записей лог-файла
+QVector<date_time_type_msg> ReadData::read_txt_file(){
     QFile file(filename);
     file.open(QIODevice::ReadOnly);
-
     QTextStream stream(&file);
 
+    QVector<date_time_type_msg> v_data;
+    // заполнение вектора типов лог-записей
     try {
     while (!stream.atEnd()){
-
             QString line = stream.readLine();
-            if(!line.contains(";")){throw std::runtime_error("Неправильный формат данных"); values.clear();}
-            QStringList line_values = line.split(";");
-            if(line_values.count() != 2){throw std::runtime_error("Неправильный формат данных");}
-            QStringList date_values = line_values[0].split(".");
-            if(date_values.count() != 3) {throw std::runtime_error("Неправильный формат данных");}
-            QDateTime date;
-            date.setDate(QDate(date_values[0].toInt(), date_values[1].toInt(), date_values[2].toInt()));
-            values[date] = line_values[1].toInt();
+            QRegularExpression reg("(\\d{4}-\\d{2}-\\d+) (\\d{2}:\\d{2}:\\d{2}) (INF|DBG) (.*)");
+            QRegularExpressionMatch reg_match = reg.match(line);
+
+            if(reg_match.hasMatch()){
+                date_time_type_msg new_struct;
+                // запись даты и времени
+                QString date_str = reg_match.captured(1);
+                QStringList date_list = date_str.split("-");
+                new_struct.date_time.setDate(QDate(date_list[0].toInt(), date_list[1].toInt(), date_list[2].toInt()));
+                QString time_str = reg_match.captured(2);
+                QStringList time_list = time_str.split(":");
+                new_struct.date_time.setTime(QTime(time_list[0].toInt(),time_list[1].toInt(),time_list[2].toInt()));
+                // запись типа и сообщения
+                new_struct.type = reg_match.captured(3);
+                new_struct.message = reg_match.captured(4);
+
+                v_data.push_back(new_struct);
+              } else {
+                  throw std::runtime_error("Ошибка чтения данных");
+              }
          }
-          }  catch (std::exception& ex) {
+         }catch (std::exception& ex) {
                QMessageBox::critical(0, "Ошибка", ex.what());
-               values.clear();
-             }
+         }
     file.close();
+    return v_data;
+    //return std::move(v_data);
 }
 
-//Функция чтения файла, вызывающая file_read_json или file_read_txt в зависимости от типа файла
-QMap<QDateTime, int> ReadData::file_read(){
-    QMap<QDateTime, int> values;
-        if(file_open()){
+//Функция, возвращающая соответствие между датой и количеством логов
+QMap<QDate, int> ReadData::make_date_number_map(QVector<date_time_type_msg> &data_vector){
+    QMap<QDate, int> date_number;
+    for(auto& structure : data_vector){
+        QDate date = structure.date_time.date();
+        if(date_number.contains(date)){
+            date_number[date] ++;
+        } else {
+            date_number[date] = 1;
+        }
+    }
+    return date_number;
+}
+
+//Функция чтения файла, вызывающая file_read_json или read_txt_file в зависимости от типа файла
+QVector<date_time_type_msg> ReadData::file_read(){
+    QVector<date_time_type_msg> data_vector;
+    if(file_open()){
             if(file_type == "json"){
-                file_read_json(values);
+              // values = file_read_json(values);
             }
             else if(file_type == "txt"){
-                file_read_txt(values);
+                data_vector = read_txt_file();
             }
         }
-    return values;
+    //return std::move(values);
+        return data_vector;
 }

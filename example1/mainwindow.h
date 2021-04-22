@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QtCharts>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -25,6 +26,10 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    void build_chart(const QMap<QDateTime, int>& values);
+    void build_chart(const QMap<QDate, int>& values);
+
+    QChartView *chartView;
+
+    void create_chart();
 };
 #endif // MAINWINDOW_H

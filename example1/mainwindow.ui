@@ -35,40 +35,15 @@
          <underline>false</underline>
         </font>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string>Введите путь к файлу или выберете файл в каталоге</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QComboBox" name="comboBox">
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
-       </property>
-       <property name="editable">
-        <bool>false</bool>
-       </property>
-       <property name="currentText">
-        <string>JSON (*.json)</string>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>JSON (*.json)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Документ (разделитель - ;) (*.txt)</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item row="1" column="0">
@@ -83,7 +58,16 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="3">
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
       <widget class="QPushButton" name="pushButton_2">
        <property name="enabled">
         <bool>true</bool>
@@ -101,15 +85,6 @@
        </property>
        <property name="text">
         <string>Открыть и построить</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit">
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
        </property>
       </widget>
      </item>

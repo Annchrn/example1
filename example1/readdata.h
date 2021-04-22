@@ -3,18 +3,24 @@
 
 #include <QMainWindow>
 
+#include "data_structure.h"
+// #include "data_structure"
+
 class ReadData
 {
 public:
-    ReadData(const QString& new_filename, const QString& new_combo_box_value);
+    ReadData(const QString& new_filename);
 
-    bool file_open();
-    void file_read_json(QMap<QDateTime, int>& values);
-    void file_read_txt(QMap<QDateTime, int>& values);
-    QMap<QDateTime, int> file_read();
+    QVector<date_time_type_msg> file_read();
+    QMap<QDate, int> make_date_number_map(QVector<date_time_type_msg> &data_vector);
+    QMap<QDate, int> file_read_json();
 
 private:
-    QString filename, file_type, combo_box_value;
+    QString filename, file_type;
+
+    bool file_open();
+    QVector<date_time_type_msg> read_txt_file();
+
 
 };
 
