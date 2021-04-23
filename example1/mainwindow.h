@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QtCharts>
+#include "data_structure.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,10 +27,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    void build_chart(const QMap<QDate, int>& values);
-
     QChartView *chartView;
+    QTableWidget* tableWidget;
 
     void create_chart();
+    void create_table();
+    void build_chart(const QMap<QDate, int>& values);
+    void build_table(const QVector<date_time_type_msg>& data_vector);
 };
 #endif // MAINWINDOW_H
