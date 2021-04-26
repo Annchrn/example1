@@ -92,22 +92,21 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
     try {
     while (!stream.atEnd()){
             QString line = stream.readLine();
-            QRegularExpression reg("(\\d{4}-\\d{2}-\\d+) (\\d{2}:\\d{2}:\\d{2}) (INF|DBG) (.*)");
+            QRegularExpression reg("(\\d{2}/\\d{2}/\\d{4}) (\\d{2}:\\d{2}:\\d{2}) (INF|DBG|FTL) (.*)");
             QRegularExpressionMatch reg_match = reg.match(line);
 
             if(reg_match.hasMatch()){
                 date_time_type_msg new_struct;
                 // запись даты и времени
                 QString date_str = reg_match.captured(1);
-                QStringList date_list = date_str.split("-");
-                new_struct.date_time.setDate(QDate(date_list[0].toInt(), date_list[1].toInt(), date_list[2].toInt()));
+                QStringList date_list = date_str.split("/");
+                new_struct.date_time.setDate(QDate(date_list[2].toInt(), date_list[1].toInt(), date_list[0].toInt()));
                 QString time_str = reg_match.captured(2);
                 QStringList time_list = time_str.split(":");
                 new_struct.date_time.setTime(QTime(time_list[0].toInt(),time_list[1].toInt(),time_list[2].toInt()));
                 // запись типа и сообщения
                 new_struct.type = reg_match.captured(3);
                 new_struct.message = reg_match.captured(4);
-
                 v_data.push_back(new_struct);
               } else {
                   throw std::runtime_error("Ошибка чтения данных");

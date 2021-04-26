@@ -34,5 +34,6 @@ private:
     void create_table();
     void build_chart(const QMap<QDate, int>& values);
     void build_table(const QVector<date_time_type_msg>& data_vector);
+    void clear_chart();
 };
 #endif // MAINWINDOW_H

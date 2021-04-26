@@ -9,6 +9,4 @@ struct date_time_type_msg {
     QString message;
 };
 
-
-
 #endif // DATA_STRUCTURE_H

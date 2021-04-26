@@ -10,6 +10,7 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -50,10 +51,12 @@ void MainWindow::create_chart()
     QChart *chart = new QChart();
     // отображение
     chartView = new QChartView(chart);
+    ui->gridLayout->addWidget(chartView, 3, 0, 1, 0);
     chart->setTitle("Зависимость количества логов от даты");
     chart->legend()->hide();
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->setMinimumSize(820,200);
+   // chartView->setHidden(true);
 }
 
 // Инициализация таблицы
@@ -62,6 +65,7 @@ void MainWindow::create_table(){
     tableWidget = new QTableWidget(this);
     ui->gridLayout->addWidget(tableWidget, 4, 0, 1, 0);
     tableWidget->setMinimumSize(820,500);
+    tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // столбцы
     tableWidget->setColumnCount(3);
@@ -71,96 +75,121 @@ void MainWindow::create_table(){
     tableWidget->setColumnWidth(0, 200);
     tableWidget->setColumnWidth(1, 100);
     tableWidget->horizontalHeader()->setStretchLastSection(true);
-   // tableWidget->horizontalHeader()->setStyleSheet("QHeaderView { background-color: qRgb(171,205,239);}");
-   // QHeaderView::setPalette(backgroundRole());
-    // qRgb(171,205,239)
+
+    tableWidget->setFont(QFont("Times", 9));
+    tableWidget->horizontalHeader()->setFont(QFont("Times", 9));//, QFont::Bold));
+    tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
+    // padding-left:4px; border:1px solid blue; }" "QHeaderView::section:checked{background-color:grey; }"
+    // , QFont::Cursive
     // прячем таблицу
- //   QTableWidgetItem* item1 = new QTableWidgetItem();
-  //  item1->setText("data");
-  //  tableWidget->setItem(1, 1, item1);
-
-    tableWidget->setHidden(true);
+  //  tableWidget->setHidden(true);
 }
 
-// Функция заполнения таблицы
-// принимает вектор структур записей из лог-файла
-void MainWindow::build_table(const QVector<date_time_type_msg>& data_vector){
-    if(!data_vector.isEmpty()){
-        // добавляем в таблицу данные из вектора структур
-        tableWidget->setRowCount(data_vector.size());
-        for(int i = 0; i < data_vector.size(); i++){
-            // 1-й столбец
-            QTableWidgetItem* item0 = new QTableWidgetItem();
-            item0->setTextAlignment(84);
-            item0->setText(data_vector[i].date_time.toString());
-            tableWidget->setItem(i, 0, item0);
-            // 2-й столбец
-            QTableWidgetItem* item1 = new QTableWidgetItem();
-            item1->setTextAlignment(84);
-            item1->setText(data_vector[i].type);
-            tableWidget->setItem(i, 1, item1);
-            // 3-й столбец
-            QTableWidgetItem* item2 = new QTableWidgetItem();
-            item2->setTextAlignment(84);
-            item2->setText(data_vector[i].message);
-            tableWidget->setItem(i, 2, item2);
-
-            tableWidget->setHidden(false); // отображаем таблицу
-        }
-        } else {
-
-    }
-
-}
-
-//Функция построения графика по считанным вершинам
+//Функция построения графика (зависимость даты от количества лог-записей)
 //values - массив вершин графика
+void MainWindow::clear_chart()
+{
+    chartView->chart()->removeAllSeries();
+    // удаляем оси, если они уже были установлены
+    auto *daxisX = chartView->chart()->axisX();
+    auto *daxisY = chartView->chart()->axisY();
+    if(daxisX && daxisY){
+        chartView->chart()->removeAxis(daxisX);
+        delete daxisX;
+        chartView->chart()->removeAxis(daxisY);
+        delete daxisY;
+    }
+}
+
 void MainWindow::build_chart(const QMap<QDate, int>& values){
-    if(!values.empty()){        // если значение массива вершин графика непустое - строим график
+    if(!values.empty()){        // если массив вершин графика непустой - строим график
+        clear_chart();
         QChart *chart = chartView->chart();
-        chart->removeAllSeries(); // удалится ли при этом указатель на series?
-        QLineSeries* series = new QLineSeries(this);
+    //    chart->removeAllSeries();
         //заполнение значений графика
+        QLineSeries* series = new QLineSeries(this);
         for(const auto& key : values.keys()){
             QDateTime k(key);
             series->append(k.toMSecsSinceEpoch(), values.value(key));
         }
         chart->addSeries(series);
-        auto *daxisX = chart->axisX();
-        auto *daxisY = chart->axisY();
-        if(daxisX && daxisY){     // удаляем оси, если они уже были установлены
-            chart->removeAxis(daxisX);
-            delete daxisX;
-            chart->removeAxis(daxisY);
-            delete daxisY;
-        }
 
+        // оси х, у
         QDateTimeAxis *axisX = new QDateTimeAxis(this);
         axisX->setTickCount(10);
         axisX->setFormat("dd.MM.yyyy");
         axisX->setTitleText("Дата");
         chart->addAxis(axisX, Qt::AlignBottom);
 
-        QValueAxis *axisY = new QValueAxis(this);        axisY->setLabelFormat("%i");
+        QValueAxis *axisY = new QValueAxis(this);
+        axisY->setLabelFormat("%i");
         axisY->setTitleText("Значения");
         chart->addAxis(axisY, Qt::AlignLeft);
 
         series->attachAxis(axisX);
         series->attachAxis(axisY);
+
+        // отображаем график
         if(chartView->isHidden())
             chartView->setHidden(false);
-        ui->gridLayout->addWidget(chartView, 3, 0, 1, 0);
-        tableWidget->setHidden(false);
+        ui->gridLayoutWidget->adjustSize();
+        adjustSize();
+   //    ui->gridLayout->addWidget(chartView, 3, 0, 1, 0);
+
 } else{    // если массив вершин графика пустой, то делаем график невидимым и перестраиваем размер окна
         QLayoutItem *child;
         if((child = ui->gridLayout->takeAt(4)) != nullptr){
-            chartView->setHidden(true);
+       //     chartView->setHidden(true);
+        //    tableWidget->setHidden(true);
+            clear_chart();
+            tableWidget->clearContents();
             ui->gridLayoutWidget->adjustSize();
             adjustSize();
         }
         delete child;
     }
 }
+
+// Функция заполнения таблицы
+// принимает вектор структур записей из лог-файла
+void MainWindow::build_table(const QVector<date_time_type_msg>& data_vector){
+    if(!data_vector.isEmpty()){     // если вектор структур непустой, заполняем таблицу
+        tableWidget->clearContents(); //удаляем старое содержимое из таблицы
+
+        // добавляем в таблицу данные из вектора структур
+        tableWidget->setRowCount(data_vector.size());
+        for(int i = 0; i < data_vector.size(); i++){
+            // 1-й столбец - "Дата"
+            QTableWidgetItem* item0 = new QTableWidgetItem();
+            item0->setTextAlignment(84);
+            item0->setText(data_vector[i].date_time.toString("ddd dd.MM.yyyy hh:mm:ss"));
+            tableWidget->setItem(i, 0, item0);
+            // 2-й столбец - "Тип"
+            QTableWidgetItem* item1 = new QTableWidgetItem();
+            item1->setTextAlignment(84);
+            item1->setText(data_vector[i].type);
+            tableWidget->setItem(i, 1, item1);
+            // 3-й столбец - "Сообщение"
+            QTableWidgetItem* item2 = new QTableWidgetItem();
+            item2->setTextAlignment(84);
+            item2->setText(data_vector[i].message);
+            tableWidget->setItem(i, 2, item2);
+
+            if(data_vector[i].type == "FTL"){
+                tableWidget->item(i, 0)->setForeground(Qt::red);
+                tableWidget->item(i, 1)->setForeground(Qt::red);
+                tableWidget->item(i, 2)->setForeground(Qt::red);
+            }
+
+            tableWidget->setHidden(false); // отображаем таблицу
+      //      ui->gridLayout->addWidget(tableWidget, 4, 0, 1, 0);
+        }
+    }
+}
+
+//void MainWindow::update_Window(){
+
+//}
 
 void MainWindow::on_pushButton_2_clicked()  // кнопка "Открыть и построить"
 {
