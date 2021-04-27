@@ -18,11 +18,10 @@ public:
     ~MainWindow();
 
 public slots:
-    void textChanged();
 
 private slots:
-    void on_pushButton_2_clicked();
-    void on_action_triggered();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -32,6 +31,7 @@ private:
 
     void create_chart();
     void create_table();
+    void create_tree();
     void build_chart(const QMap<QDate, int>& values);
     void build_table(const QVector<date_time_type_msg>& data_vector);
     void clear_chart();

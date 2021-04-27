@@ -22,6 +22,27 @@ ReadData::ReadData(const QString& new_filename)  //конструктор
     file_type = list.at(list.count()-1);
 }
 
+// Функции доступа
+int ReadData::get_logs_count()
+{
+    return logs_count;
+}
+
+int ReadData::get_INF_count()
+{
+    return INF_count;
+}
+
+int ReadData::get_DBG_count()
+{
+    return DBG_count;
+}
+
+int ReadData::get_FTL_count()
+{
+    return FTL_count;
+}
+
 //Функция открытия файла
 //возвращает true в случае успешного открытия и исключение (диалоговое окно с сообщением) в случае неудачи
 bool ReadData::file_open(){
@@ -106,8 +127,15 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
                 new_struct.date_time.setTime(QTime(time_list[0].toInt(),time_list[1].toInt(),time_list[2].toInt()));
                 // запись типа и сообщения
                 new_struct.type = reg_match.captured(3);
+                if (new_struct.type == "INF")
+                    INF_count ++;
+                if (new_struct.type == "DBG")
+                    DBG_count ++;
+                if (new_struct.type == "FTL")
+                    FTL_count ++;
                 new_struct.message = reg_match.captured(4);
                 v_data.push_back(new_struct);
+                logs_count ++;
               } else {
                   throw std::runtime_error("Ошибка чтения данных");
               }
@@ -117,7 +145,6 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
          }
     file.close();
     return v_data;
-    //return std::move(v_data);
 }
 
 //Функция, возвращающая соответствие между датой и количеством логов
@@ -145,6 +172,5 @@ QVector<date_time_type_msg> ReadData::file_read(){
                 data_vector = read_txt_file();
             }
         }
-    //return std::move(values);
         return data_vector;
 }

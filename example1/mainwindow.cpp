@@ -5,10 +5,11 @@
 #include <QTextStream>
 #include <QDateTime>
 #include <QMap>
-
 #include <QFileDialog>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QTreeWidget>
+#include <QString>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -19,30 +20,20 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(ui->gridLayoutWidget);
     // внешний вид окна
     ui->gridLayout->setMargin(15);
-    ui->lineEdit->setMinimumWidth(500);
+    ui->pushButton->setMaximumWidth(150);
+    ui->label->setMaximumWidth(200);
     adjustSize();
-    // поле ввода
-    ui->lineEdit->setPlaceholderText("Файл не выбран");
-    ui->pushButton_2->setDisabled(true);
-    connect(ui->lineEdit, SIGNAL(textChanged(QString)), this, SLOT(textChanged()));
     // график
     create_chart();
     //таблица
     create_table();
+    // фильтры
+    create_tree();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-//Делает кнопку неактивной, если lineEdit пуст
-void MainWindow::textChanged(){
-    if(ui->lineEdit->text() != ""){
-        ui->pushButton_2->setEnabled(true);
-    }else{
-        ui->pushButton_2->setDisabled(true);
-    }
 }
 
 // Инициализация графика
@@ -51,42 +42,48 @@ void MainWindow::create_chart()
     QChart *chart = new QChart();
     // отображение
     chartView = new QChartView(chart);
-    ui->gridLayout->addWidget(chartView, 3, 0, 1, 0);
-    chart->setTitle("Зависимость количества логов от даты");
+    ui->gridLayout->addWidget(chartView, 2, 0, 1, 3);
+    chart->setTitle("Зависимость количества записей журнала от даты");
     chart->legend()->hide();
     chartView->setRenderHint(QPainter::Antialiasing);
-    chartView->setMinimumSize(820,200);
-   // chartView->setHidden(true);
+    chartView->setMinimumSize(1000,200);
 }
 
 // Инициализация таблицы
 void MainWindow::create_table(){
     //таблица
     tableWidget = new QTableWidget(this);
-    ui->gridLayout->addWidget(tableWidget, 4, 0, 1, 0);
-    tableWidget->setMinimumSize(820,500);
+    ui->gridLayout->addWidget(tableWidget, 4, 0, 1, -1);
+    tableWidget->setMinimumSize(800,500);
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // столбцы
-    tableWidget->setColumnCount(3);
+    tableWidget->setColumnCount(2);
     QStringList name_table;
-    name_table << "Дата" << "Тип" << "Сообщение";
+    name_table << "Дата" << "Сообщение";
     tableWidget->setHorizontalHeaderLabels(name_table);
     tableWidget->setColumnWidth(0, 200);
-    tableWidget->setColumnWidth(1, 100);
     tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     tableWidget->setFont(QFont("Times", 9));
     tableWidget->horizontalHeader()->setFont(QFont("Times", 9));//, QFont::Bold));
     tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
-    // padding-left:4px; border:1px solid blue; }" "QHeaderView::section:checked{background-color:grey; }"
-    // , QFont::Cursive
-    // прячем таблицу
-  //  tableWidget->setHidden(true);
 }
 
-//Функция построения графика (зависимость даты от количества лог-записей)
-//values - массив вершин графика
+// Инициализаиция QTreeWidget
+//
+void MainWindow::create_tree()
+{
+    QTreeWidget *treeWidget = new QTreeWidget(this);
+    treeWidget->setHeaderLabel("Фильтры");
+
+    treeWidget->setMaximumWidth(200);
+    ui->gridLayout->addWidget(treeWidget, 4, 0, 1, 1);
+
+}
+
+// Функция очистки графика
+// удаляет series и axixX, axisY из графика
 void MainWindow::clear_chart()
 {
     chartView->chart()->removeAllSeries();
@@ -101,22 +98,24 @@ void MainWindow::clear_chart()
     }
 }
 
+//Функция построения графика (зависимость даты от количества лог-записей)
+//values - массив вершин графика
 void MainWindow::build_chart(const QMap<QDate, int>& values){
     if(!values.empty()){        // если массив вершин графика непустой - строим график
-        clear_chart();
-        QChart *chart = chartView->chart();
-    //    chart->removeAllSeries();
+        clear_chart(); // очищаем старое содержимое графика
+
         //заполнение значений графика
         QLineSeries* series = new QLineSeries(this);
         for(const auto& key : values.keys()){
             QDateTime k(key);
             series->append(k.toMSecsSinceEpoch(), values.value(key));
         }
+        QChart *chart = chartView->chart();
         chart->addSeries(series);
 
         // оси х, у
         QDateTimeAxis *axisX = new QDateTimeAxis(this);
-        axisX->setTickCount(10);
+        axisX->setTickCount(12);
         axisX->setFormat("dd.MM.yyyy");
         axisX->setTitleText("Дата");
         chart->addAxis(axisX, Qt::AlignBottom);
@@ -134,13 +133,10 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
             chartView->setHidden(false);
         ui->gridLayoutWidget->adjustSize();
         adjustSize();
-   //    ui->gridLayout->addWidget(chartView, 3, 0, 1, 0);
 
-} else{    // если массив вершин графика пустой, то делаем график невидимым и перестраиваем размер окна
+} else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
         QLayoutItem *child;
         if((child = ui->gridLayout->takeAt(4)) != nullptr){
-       //     chartView->setHidden(true);
-        //    tableWidget->setHidden(true);
             clear_chart();
             tableWidget->clearContents();
             ui->gridLayoutWidget->adjustSize();
@@ -164,25 +160,17 @@ void MainWindow::build_table(const QVector<date_time_type_msg>& data_vector){
             item0->setTextAlignment(84);
             item0->setText(data_vector[i].date_time.toString("ddd dd.MM.yyyy hh:mm:ss"));
             tableWidget->setItem(i, 0, item0);
-            // 2-й столбец - "Тип"
+            // 2-й столбец - "Сообщение"
             QTableWidgetItem* item1 = new QTableWidgetItem();
             item1->setTextAlignment(84);
-            item1->setText(data_vector[i].type);
+            item1->setText(data_vector[i].message);
             tableWidget->setItem(i, 1, item1);
-            // 3-й столбец - "Сообщение"
-            QTableWidgetItem* item2 = new QTableWidgetItem();
-            item2->setTextAlignment(84);
-            item2->setText(data_vector[i].message);
-            tableWidget->setItem(i, 2, item2);
 
             if(data_vector[i].type == "FTL"){
                 tableWidget->item(i, 0)->setForeground(Qt::red);
                 tableWidget->item(i, 1)->setForeground(Qt::red);
-                tableWidget->item(i, 2)->setForeground(Qt::red);
             }
-
             tableWidget->setHidden(false); // отображаем таблицу
-      //      ui->gridLayout->addWidget(tableWidget, 4, 0, 1, 0);
         }
     }
 }
@@ -191,21 +179,20 @@ void MainWindow::build_table(const QVector<date_time_type_msg>& data_vector){
 
 //}
 
-void MainWindow::on_pushButton_2_clicked()  // кнопка "Открыть и построить"
-{
-    ReadData data_read(ui->lineEdit->text());
-    QVector<date_time_type_msg> data_vector = data_read.file_read();
-    QMap<QDate, int> values = data_read.make_date_number_map(data_vector);
-    build_chart(values);
-}
 
-void MainWindow::on_action_triggered()  // открытие через меню
+
+void MainWindow::on_pushButton_clicked()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Выберите файл", "", "Документ (разделитель - ;) (*.txt);; JSON (*.json)");
-    ui->lineEdit->setText(filename);
+    QString label_file_name = filename.split("/").takeLast();
+    ui->label->setText("Файл " + label_file_name);
+
     ReadData data_read(filename);
     QVector<date_time_type_msg> data_vector = data_read.file_read();
     QMap<QDate, int> values = data_read.make_date_number_map(data_vector);
     build_chart(values);
     build_table(data_vector);
+
+    // отображение данных о лог-файле
+    ui->label_3->setText("Всего записей: " + QString::number(data_read.get_logs_count()));
 }
