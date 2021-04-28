@@ -22,13 +22,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gridLayout->setMargin(15);
     ui->pushButton->setMaximumWidth(150);
     ui->label->setMaximumWidth(200);
+
     adjustSize();
+
     // график
-    create_chart();
-    //таблица
-    create_table();
-    // фильтры
-    create_tree();
+  create_chart();
+  // фильтры
+  create_tree();
+  //таблица
+  create_table();
 }
 
 MainWindow::~MainWindow()
@@ -42,7 +44,7 @@ void MainWindow::create_chart()
     QChart *chart = new QChart();
     // отображение
     chartView = new QChartView(chart);
-    ui->gridLayout->addWidget(chartView, 2, 0, 1, 3);
+    ui->gridLayout->addWidget(chartView, 2, 0, 1, -1);
     chart->setTitle("Зависимость количества записей журнала от даты");
     chart->legend()->hide();
     chartView->setRenderHint(QPainter::Antialiasing);
@@ -53,7 +55,6 @@ void MainWindow::create_chart()
 void MainWindow::create_table(){
     //таблица
     tableWidget = new QTableWidget(this);
-    ui->gridLayout->addWidget(tableWidget, 4, 0, 1, -1);
     tableWidget->setMinimumSize(800,500);
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -68,6 +69,8 @@ void MainWindow::create_table(){
     tableWidget->setFont(QFont("Times", 9));
     tableWidget->horizontalHeader()->setFont(QFont("Times", 9));//, QFont::Bold));
     tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
+
+     ui->gridLayout->addWidget(tableWidget, 3, 1, -1, -1);
 }
 
 // Инициализаиция QTreeWidget
@@ -76,10 +79,9 @@ void MainWindow::create_tree()
 {
     QTreeWidget *treeWidget = new QTreeWidget(this);
     treeWidget->setHeaderLabel("Фильтры");
-
+    treeWidget->setMinimumSize(200,500);
     treeWidget->setMaximumWidth(200);
-    ui->gridLayout->addWidget(treeWidget, 4, 0, 1, 1);
-
+    ui->gridLayout->addWidget(treeWidget, 3, 0, -1, 1);
 }
 
 // Функция очистки графика
@@ -97,7 +99,7 @@ void MainWindow::clear_chart()
         delete daxisY;
     }
 }
-
+/*
 //Функция построения графика (зависимость даты от количества лог-записей)
 //values - массив вершин графика
 void MainWindow::build_chart(const QMap<QDate, int>& values){
@@ -139,12 +141,81 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
         if((child = ui->gridLayout->takeAt(4)) != nullptr){
             clear_chart();
             tableWidget->clearContents();
-            ui->gridLayoutWidget->adjustSize();
-            adjustSize();
+            tableWidget->setRowCount(0);
         }
         delete child;
     }
 }
+*/
+
+//Функция, которая будет регулировать количество делений на оси х
+/* QBarCategoryAxis MainWindow::make_axisX(QBarCategoryAxis *axisX, const QStringList& dates_values){
+ * if(axisX->count() < 12){
+ *
+ * }
+ *
+ * }
+*/
+//Функция построения графика (зависимость даты от количества лог-записей)
+//values - массив вершин графика
+void MainWindow::build_chart(const QMap<QDate, int>& values){
+    if(!values.empty()){        // если массив вершин графика непустой - строим график
+        clear_chart(); // очищаем старое содержимое графика
+
+        //заполнение значений графика
+        QBarSeries* series = new QBarSeries(this);
+        QBarSet *set = new QBarSet("Количество сообщений"); // для добавления значений
+        QStringList dates_values;
+
+        for(const auto& key : values.keys()){
+           // series->append(k.toMSecsSinceEpoch(), values.value(key));
+            dates_values << key.toString();
+            *set << values.value(key);
+        }
+        series->append(set);
+        QChart *chart = chartView->chart();
+        chart->addSeries(series);
+
+        // ось х
+        QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
+        axisX->append(dates_values);
+
+        axisX->setTitleText("Дата");
+        chart->addAxis(axisX, Qt::AlignBottom);
+        series->attachAxis(axisX);
+
+        // оси х, у
+//        QDateTimeAxis *axisX = new QDateTimeAxis(this);
+//        axisX->setTickCount(12);
+//        axisX->setFormat("dd.MM.yyyy");
+//        axisX->setTitleText("Дата");
+//        chart->addAxis(axisX, Qt::AlignBottom);
+
+        // ось у
+        QValueAxis *axisY = new QValueAxis(this);
+        axisY->setLabelFormat("%i");
+        axisY->setTitleText("Значения");
+        chart->addAxis(axisY, Qt::AlignLeft);
+        series->attachAxis(axisY);
+
+        // отображаем график
+        if(chartView->isHidden())
+            chartView->setHidden(false);
+
+        ui->gridLayoutWidget->adjustSize();
+        adjustSize();
+
+} else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
+        QLayoutItem *child;
+        if((child = ui->gridLayout->takeAt(4)) != nullptr){
+            clear_chart();
+            tableWidget->clearContents();
+            tableWidget->setRowCount(0);
+        }
+        delete child;
+    }
+}
+
 
 // Функция заполнения таблицы
 // принимает вектор структур записей из лог-файла
@@ -189,9 +260,9 @@ void MainWindow::on_pushButton_clicked()
 
     ReadData data_read(filename);
     QVector<date_time_type_msg> data_vector = data_read.file_read();
-    QMap<QDate, int> values = data_read.make_date_number_map(data_vector);
-    build_chart(values);
-    build_table(data_vector);
+ //   QMap<QDate, int> values = data_read.make_date_number_map(data_vector);
+ //   build_chart(values);
+ //   build_table(data_vector);
 
     // отображение данных о лог-файле
     ui->label_3->setText("Всего записей: " + QString::number(data_read.get_logs_count()));

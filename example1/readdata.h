@@ -4,7 +4,6 @@
 #include <QMainWindow>
 
 #include "data_structure.h"
-// #include "data_structure"
 
 class ReadData
 {
@@ -22,7 +21,6 @@ public:
 
 private:
     QString filename, file_type;
-    int logs_count = 0, INF_count = 0, DBG_count = 0, FTL_count = 0;
 
     bool file_open();
     QVector<date_time_type_msg> read_txt_file();

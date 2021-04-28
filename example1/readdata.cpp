@@ -127,15 +127,8 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
                 new_struct.date_time.setTime(QTime(time_list[0].toInt(),time_list[1].toInt(),time_list[2].toInt()));
                 // запись типа и сообщения
                 new_struct.type = reg_match.captured(3);
-                if (new_struct.type == "INF")
-                    INF_count ++;
-                if (new_struct.type == "DBG")
-                    DBG_count ++;
-                if (new_struct.type == "FTL")
-                    FTL_count ++;
                 new_struct.message = reg_match.captured(4);
                 v_data.push_back(new_struct);
-                logs_count ++;
               } else {
                   throw std::runtime_error("Ошибка чтения данных");
               }
