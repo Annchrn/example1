@@ -22,27 +22,6 @@ ReadData::ReadData(const QString& new_filename)  //конструктор
     file_type = list.at(list.count()-1);
 }
 
-// Функции доступа
-int ReadData::get_logs_count()
-{
-    return logs_count;
-}
-
-int ReadData::get_INF_count()
-{
-    return INF_count;
-}
-
-int ReadData::get_DBG_count()
-{
-    return DBG_count;
-}
-
-int ReadData::get_FTL_count()
-{
-    return FTL_count;
-}
-
 //Функция открытия файла
 //возвращает true в случае успешного открытия и исключение (диалоговое окно с сообщением) в случае неудачи
 bool ReadData::file_open(){
@@ -138,20 +117,6 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
          }
     file.close();
     return v_data;
-}
-
-//Функция, возвращающая соответствие между датой и количеством логов
-QMap<QDate, int> ReadData::make_date_number_map(QVector<date_time_type_msg> &data_vector){
-    QMap<QDate, int> date_number;
-    for(auto& structure : data_vector){
-        QDate date = structure.date_time.date();
-        if(date_number.contains(date)){
-            date_number[date] ++;
-        } else {
-            date_number[date] = 1;
-        }
-    }
-    return date_number;
 }
 
 //Функция чтения файла, вызывающая file_read_json или read_txt_file в зависимости от типа файла

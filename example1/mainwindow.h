@@ -35,5 +35,6 @@ private:
     void build_chart(const QMap<QDate, int>& values);
     void build_table(const QVector<date_time_type_msg>& data_vector);
     void clear_chart();
+    void create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values);
 };
 #endif // MAINWINDOW_H

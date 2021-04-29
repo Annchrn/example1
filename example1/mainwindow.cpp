@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "readdata.h"
+#include "processdata.h"
 
 #include <QTextStream>
 #include <QDateTime>
@@ -24,13 +25,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->label->setMaximumWidth(200);
 
     adjustSize();
-
     // график
-  create_chart();
-  // фильтры
-  create_tree();
-  //таблица
-  create_table();
+    create_chart();
+    // фильтры
+    create_tree();
+    //таблица
+    create_table();
 }
 
 MainWindow::~MainWindow()
@@ -148,14 +148,25 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
 }
 */
 
-//Функция, которая будет регулировать количество делений на оси х
-/* QBarCategoryAxis MainWindow::make_axisX(QBarCategoryAxis *axisX, const QStringList& dates_values){
- * if(axisX->count() < 12){
- *
- * }
- *
- * }
-*/
+//Функция добавления значений на ось х
+// принимает указатель на ось и данные для графика
+void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values){
+    int dates_count = dates_values.count();
+    if(dates_count < 12){
+    // работаем с вектором значений, добавляем до 12
+
+    } else if(dates_count > 12 && dates_count < 40){
+        axisX->setLabelsAngle(-90);
+    } else if(dates_count > 40) {
+
+    }
+    QStringList categories;
+    for(auto temp_date : dates_values.keys()){
+       categories << temp_date.toString("dd.MM.yy");
+    }
+    axisX->append(categories);
+  }
+
 //Функция построения графика (зависимость даты от количества лог-записей)
 //values - массив вершин графика
 void MainWindow::build_chart(const QMap<QDate, int>& values){
@@ -165,11 +176,12 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
         //заполнение значений графика
         QBarSeries* series = new QBarSeries(this);
         QBarSet *set = new QBarSet("Количество сообщений"); // для добавления значений
-        QStringList dates_values;
-
+      //  QStringList dates_values;
+        QVector<QDate> dates;
         for(const auto& key : values.keys()){
            // series->append(k.toMSecsSinceEpoch(), values.value(key));
-            dates_values << key.toString();
+            //dates_values << key.toString();
+            dates << key;
             *set << values.value(key);
         }
         series->append(set);
@@ -177,19 +189,21 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
         chart->addSeries(series);
 
         // ось х
-        QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
-        axisX->append(dates_values);
+       QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
+        create_axisX(axisX, values);
 
         axisX->setTitleText("Дата");
         chart->addAxis(axisX, Qt::AlignBottom);
         series->attachAxis(axisX);
 
         // оси х, у
-//        QDateTimeAxis *axisX = new QDateTimeAxis(this);
-//        axisX->setTickCount(12);
-//        axisX->setFormat("dd.MM.yyyy");
-//        axisX->setTitleText("Дата");
-//        chart->addAxis(axisX, Qt::AlignBottom);
+    //    QDateTimeAxis *axisX = new QDateTimeAxis(this);
+      // axisX->setR
+      //  axisX->setTickCount(5);
+       // axisX->setFormat("dd.MM.yyyy");
+      //  axisX->setTitleText("Дата");
+       // chart->addAxis(axisX, Qt::AlignBottom);
+      // series->attachAxis(axisX);
 
         // ось у
         QValueAxis *axisY = new QValueAxis(this);
@@ -215,7 +229,6 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
         delete child;
     }
 }
-
 
 // Функция заполнения таблицы
 // принимает вектор структур записей из лог-файла
@@ -260,10 +273,11 @@ void MainWindow::on_pushButton_clicked()
 
     ReadData data_read(filename);
     QVector<date_time_type_msg> data_vector = data_read.file_read();
- //   QMap<QDate, int> values = data_read.make_date_number_map(data_vector);
- //   build_chart(values);
- //   build_table(data_vector);
+    ProcessData counters(data_vector);
+    QMap<QDate, int> values = counters.make_date_number_map(data_vector);
+    build_chart(values);
+    build_table(data_vector);
 
     // отображение данных о лог-файле
-    ui->label_3->setText("Всего записей: " + QString::number(data_read.get_logs_count()));
+    ui->label_3->setText("Считано записей: " + QString::number(counters.get_logs_count()));
 }

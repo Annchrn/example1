@@ -79,7 +79,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Всего записей:</string>
+        <string>Считано записей:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -170,7 +170,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Файл</string>
+        <string/>
        </property>
        <property name="indent">
         <number>5</number>
