@@ -20,6 +20,7 @@ HEADERS += \
     data_structure.h \
     mainwindow.h \
     processdata.h \
+    range_counters.h \
     readdata.h \
 
 
