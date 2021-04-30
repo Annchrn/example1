@@ -29,8 +29,14 @@ MainWindow::MainWindow(QWidget *parent)
     // добавление кнопки "Очистить"
     clean_filters_button = new QPushButton("Очистить", this);
     connect(clean_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_clean_clicked()));
-    ui->gridLayout->addWidget(clean_filters_button, 3, 6);
+    ui->gridLayout->addWidget(clean_filters_button, 3, 7);
     clean_filters_button->setMaximumWidth(80);
+
+    QLabel *label = new QLabel(this);
+    ui->gridLayout->addWidget(label, 3, 0);
+    label->setText("Применённые фильтры:");
+
+
     //ui->gridLayout->a
     // фильтры
     create_tree();
