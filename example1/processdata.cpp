@@ -1,4 +1,5 @@
 #include "processdata.h"
+#include <QDebug>
 
 ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
 {
@@ -48,6 +49,67 @@ QMap<QDate, int> ProcessData::make_date_number_map(const QVector<date_time_type_
     }
     return date_number;
 }
+
+
+//Функция, возвращающая соответствие между НЕДЕЛЕЙ(месяцем) и количеством логов
+// принимает вектор структур data_vector
+QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
+    //получаем соотвествие между днём и количеством логов
+    QMap<QDate, int> date_number;
+    for(auto& structure : data_vector){
+        QDate date = structure.date_time.date();
+        if(date_number.contains(date)){
+            date_number[date] ++;
+        } else {
+            date_number[date] = 1;
+        }
+    }
+    // считаем количество логов по неделям с первого дня в векторе структур
+    QMap<QDate, int> week_number;
+    QDate temp_day = data_vector[0].date_time.date();
+    QDate temp_seventh_day = temp_day.addDays(7);
+
+    while (temp_seventh_day <= data_vector.last().date_time.date()){ // проходим по целым неделям в диапазоне дат вектора структур
+       while(temp_day < temp_seventh_day){
+            if(date_number.contains(temp_day))
+                week_number[temp_seventh_day.addDays(-7)] += date_number[temp_day];
+            temp_day = temp_day.addDays(1);
+        }
+        temp_seventh_day = temp_seventh_day.addDays(7);
+    }
+    while(temp_day <= data_vector.last().date_time.date()){    // добавляем значения для оставшихся дней
+        if(date_number.contains(temp_day))
+            week_number[temp_seventh_day.addDays(-7)] += date_number[temp_day];
+        temp_day = temp_day.addDays(1);
+    }
+    return week_number;
+}
+/*
+//Функция, возвращающая соответствие между 8-ю часами и количеством логов
+// принимает вектор структур data_vector
+QMap<QDate, int> ProcessData::make_date_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
+    QMap<QDate, int> period_number;
+    for(auto& structure : data_vector){
+        QDate date = structure.date_time.date();
+        if(date_number.contains(date)){
+            date_number[date] ++;
+        } else {
+            date_number[date] = 1;
+        }
+    }
+    return period_number;
+}
+
+
+
+
+
+
+*/
+
+
+
+
 
 // Функция группировки сообщений по 8 часов
 // возвращает структуру qmap(время(начало каждых 8 часов) - количество сообщений за промежуток) и счётчики

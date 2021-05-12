@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "readdata.h"
-#include "processdata.h"
+
 
 #include <QTextStream>
 #include <QDateTime>
@@ -32,16 +32,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gridLayout->addWidget(clean_filters_button, 3, 7);
     clean_filters_button->setMaximumWidth(80);
 
+    // Добавление метки "Применённые фильтры"
     QLabel *label = new QLabel(this);
     ui->gridLayout->addWidget(label, 3, 0);
     label->setText("Применённые фильтры:");
 
-
-    //ui->gridLayout->a
     // фильтры
     create_tree();
     //таблица
     create_table();
+
+    // сигналы
 }
 
 MainWindow::~MainWindow()
@@ -56,7 +57,7 @@ void MainWindow::create_chart()
     // отображение
     chartView = new QChartView(chart);
     ui->gridLayout->addWidget(chartView, 2, 0, 1, -1);
-    chart->setTitle("Зависимость количества записей журнала от даты");
+    chart->setTitle("Зависимость количества записей журнала от временного диапазона");
     chart->legend()->hide();
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->setMinimumSize(1000,250);
@@ -110,88 +111,60 @@ void MainWindow::clear_chart()
         delete daxisY;
     }
 }
-/*
-//Функция построения графика (зависимость даты от количества лог-записей)
-//values - массив вершин графика
-void MainWindow::build_chart(const QMap<QDate, int>& values){
-    if(!values.empty()){        // если массив вершин графика непустой - строим график
-        clear_chart(); // очищаем старое содержимое графика
 
-        //заполнение значений графика
-        QLineSeries* series = new QLineSeries(this);
-        for(const auto& key : values.keys()){
-            QDateTime k(key);
-            series->append(k.toMSecsSinceEpoch(), values.value(key));
-        }
-        QChart *chart = chartView->chart();
-        chart->addSeries(series);
-
-        // оси х, у
-        QDateTimeAxis *axisX = new QDateTimeAxis(this);
-        axisX->setTickCount(12);
-        axisX->setFormat("dd.MM.yyyy");
-        axisX->setTitleText("Дата");
-        chart->addAxis(axisX, Qt::AlignBottom);
-
-        QValueAxis *axisY = new QValueAxis(this);
-        axisY->setLabelFormat("%i");
-        axisY->setTitleText("Значения");
-        chart->addAxis(axisY, Qt::AlignLeft);
-
-        series->attachAxis(axisX);
-        series->attachAxis(axisY);
-
-        // отображаем график
-        if(chartView->isHidden())
-            chartView->setHidden(false);
-        ui->gridLayoutWidget->adjustSize();
-        adjustSize();
-
-} else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
-        QLayoutItem *child;
-        if((child = ui->gridLayout->takeAt(4)) != nullptr){
-            clear_chart();
-            tableWidget->clearContents();
-            tableWidget->setRowCount(0);
-        }
-        delete child;
-    }
-}
-*/
-
-//Функция добавления значений на ось х
+//Функция добавления значений на ось х. Также устанавливает заголовок оси и угол наклона надписей
 // принимает указатель на ось и данные для графика
-void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values){
-    int dates_count = dates_values.count();
-    if(dates_count < 12){
-    // работаем с вектором значений, добавляем до 12
-
-    } else if(dates_count > 12 && dates_count < 40){
-        axisX->setLabelsAngle(-90);
-    } else if(dates_count > 40) {
-
-    }
+void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values, int range){
     QStringList categories;
-    for(auto temp_date : dates_values.keys()){
-       categories << temp_date.toString("dd.MM.yy");
+    if(range <= 3){
+        axisX->setTitleText("Отрезки времени по 8 часов");
+        qDebug() << "для случая, когда 3 дня и меньше пока нет функции по 8 часов";
+    } else if(range > 3 && range <= 31){
+        axisX->setTitleText("Даты");
+        for(auto temp_date : dates_values.keys()){
+           categories << temp_date.toString("dd.MM.yy");
+        }
+        if(range > 15)
+            axisX->setLabelsAngle(-90);
+    } else if(range > 31) {
+        axisX->setTitleText("Недели");
+        QDate last_date = dates_values.keys().last();
+        for(auto temp_date : dates_values.keys()){
+            if(temp_date != last_date){
+                categories << temp_date.toString("dd.MM")   + " - " +  temp_date.addDays(7).toString("dd.MM.yy");
+            }else {
+                categories << temp_date.toString("dd.MM")   + " - " +  dates_values.keys().first().addDays(range).toString("dd.MM.yy");
+            }
+        }
+        if(range > 10)
+            axisX->setLabelsAngle(-45);
     }
     axisX->append(categories);
   }
 
 //Функция построения графика (зависимость даты от количества лог-записей)
 //values - массив вершин графика
-void MainWindow::build_chart(const QMap<QDate, int>& values){
+void MainWindow::build_chart(ProcessData& counters){
+
+    //проверяем диапазон дат и подсчитываем соответствие между временем/датой/неделей и количеством логов
+    QMap<QDate, int> values;
+    int range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
+    if(range < 3){
+
+    } else if(range > 3 && range < 31){
+        values = counters.make_date_number_map(data_vector);
+    } else {
+        values = counters.make_week_number_map(data_vector);
+    }
+
     if(!values.empty()){        // если массив вершин графика непустой - строим график
         clear_chart(); // очищаем старое содержимое графика
 
         //заполнение значений графика
         QBarSeries* series = new QBarSeries(this);
-        QBarSet *set = new QBarSet("Количество сообщений"); // для добавления значений
-      //  QStringList dates_values;
+        QBarSet *set = new QBarSet("Количество сообщений");
         QVector<QDate> dates;
         for(const auto& key : values.keys()){
-           // series->append(k.toMSecsSinceEpoch(), values.value(key));
-            //dates_values << key.toString();
             dates << key;
             *set << values.value(key);
         }
@@ -200,21 +173,11 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
         chart->addSeries(series);
 
         // ось х
-       QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
-        create_axisX(axisX, values);
+        QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
+        create_axisX(axisX, values, range);
 
-        axisX->setTitleText("Дата");
         chart->addAxis(axisX, Qt::AlignBottom);
         series->attachAxis(axisX);
-
-        // оси х, у
-    //    QDateTimeAxis *axisX = new QDateTimeAxis(this);
-      // axisX->setR
-      //  axisX->setTickCount(5);
-       // axisX->setFormat("dd.MM.yyyy");
-      //  axisX->setTitleText("Дата");
-       // chart->addAxis(axisX, Qt::AlignBottom);
-      // series->attachAxis(axisX);
 
         // ось у
         QValueAxis *axisY = new QValueAxis(this);
@@ -243,7 +206,7 @@ void MainWindow::build_chart(const QMap<QDate, int>& values){
 
 // Функция заполнения таблицы
 // принимает вектор структур записей из лог-файла
-void MainWindow::build_table(const QVector<date_time_type_msg>& data_vector){
+void MainWindow::build_table(){
     if(!data_vector.isEmpty()){     // если вектор структур непустой, заполняем таблицу
         tableWidget->clearContents(); //удаляем старое содержимое из таблицы
 
@@ -283,14 +246,11 @@ void MainWindow::on_pushButton_clicked()
     ui->label->setText("Файл " + label_file_name);
 
     ReadData data_read(filename);
-    QVector<date_time_type_msg> data_vector = data_read.file_read();
+    data_vector = data_read.file_read();
     ProcessData counters(data_vector);
 
-    // проверка диапазона и вызов соотв. ф-и update_window, которая принимает структуру qmap - зависимость количества сообщений от времени и счётчики
-
-    QMap<QDate, int> values = counters.make_date_number_map(data_vector);
-    build_chart(values);
-    build_table(data_vector);
+    build_chart(counters);
+    build_table();
 
     // отображение данных о лог-файле
     ui->label_3->setText("Всего записей: " + QString::number(counters.get_logs_count()));
@@ -301,7 +261,6 @@ void MainWindow::on_pushButton_clicked()
         ui->dateTimeEdit_2->setDateTime(finish);
     }
 }
-
 
 void MainWindow::on_pushButton_clean_clicked() // кнопка "Очистить"
 {

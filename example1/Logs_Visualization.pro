@@ -10,18 +10,22 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    datavectormodel.cpp \
     main.cpp \
     mainwindow.cpp \
     processdata.cpp \
     readdata.cpp \
+    windowcontroller.cpp
 
 
 HEADERS += \
     data_structure.h \
+    datavectormodel.h \
     mainwindow.h \
     processdata.h \
     range_counters.h \
     readdata.h \
+    windowcontroller.h
 
 
 FORMS += \

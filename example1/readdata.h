@@ -11,7 +11,6 @@ public:
     ReadData(const QString& new_filename);
 
     QVector<date_time_type_msg> file_read();
-    QMap<QDate, int> file_read_json();
 
 private:
     QString filename, file_type;
