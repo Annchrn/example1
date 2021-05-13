@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "readdata.h"
 
-
 #include <QTextStream>
 #include <QDateTime>
 #include <QMap>
@@ -114,7 +113,8 @@ void MainWindow::clear_chart()
 
 //Функция добавления значений на ось х. Также устанавливает заголовок оси и угол наклона надписей
 // принимает указатель на ось и данные для графика
-void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values, int range){
+template <typename T>
+void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<T, int>& dates_values, int range){
     QStringList categories;
     if(range <= 3){
         axisX->setTitleText("Отрезки времени по 8 часов");
@@ -124,11 +124,11 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& d
         for(auto temp_date : dates_values.keys()){
            categories << temp_date.toString("dd.MM.yy");
         }
-        if(range > 15)
+        if(categories.size() > 15)
             axisX->setLabelsAngle(-90);
     } else if(range > 31) {
         axisX->setTitleText("Недели");
-        QDate last_date = dates_values.keys().last();
+        auto last_date = dates_values.keys().last();
         for(auto temp_date : dates_values.keys()){
             if(temp_date != last_date){
                 categories << temp_date.toString("dd.MM")   + " - " +  temp_date.addDays(7).toString("dd.MM.yy");
@@ -136,34 +136,24 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& d
                 categories << temp_date.toString("dd.MM")   + " - " +  dates_values.keys().first().addDays(range).toString("dd.MM.yy");
             }
         }
-        if(range > 10)
+        if(categories.size() > 10) // не количество днец а количество недель, которое выводится
             axisX->setLabelsAngle(-45);
     }
     axisX->append(categories);
   }
 
-//Функция построения графика (зависимость даты от количества лог-записей)
-//values - массив вершин графика
-void MainWindow::build_chart(ProcessData& counters){
-
-    //проверяем диапазон дат и подсчитываем соответствие между временем/датой/неделей и количеством логов
-    QMap<QDate, int> values;
-    int range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
-    if(range < 3){
-
-    } else if(range > 3 && range < 31){
-        values = counters.make_date_number_map(data_vector);
-    } else {
-        values = counters.make_week_number_map(data_vector);
-    }
-
+//Функция заполнения графика значениями
+//values - массив вершин графика, где значения для оси х имеют тип QDate
+template <typename T>
+void MainWindow::fill_chart(const QMap<T, int>& values, int& range)
+{
     if(!values.empty()){        // если массив вершин графика непустой - строим график
         clear_chart(); // очищаем старое содержимое графика
 
         //заполнение значений графика
         QBarSeries* series = new QBarSeries(this);
         QBarSet *set = new QBarSet("Количество сообщений");
-        QVector<QDate> dates;
+        QVector<T> dates;
         for(const auto& key : values.keys()){
             dates << key;
             *set << values.value(key);
@@ -175,7 +165,6 @@ void MainWindow::build_chart(ProcessData& counters){
         // ось х
         QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
         create_axisX(axisX, values, range);
-
         chart->addAxis(axisX, Qt::AlignBottom);
         series->attachAxis(axisX);
 
@@ -189,7 +178,6 @@ void MainWindow::build_chart(ProcessData& counters){
         // отображаем график
         if(chartView->isHidden())
             chartView->setHidden(false);
-
         ui->gridLayoutWidget->adjustSize();
         adjustSize();
 
@@ -204,8 +192,30 @@ void MainWindow::build_chart(ProcessData& counters){
     }
 }
 
+//Функция построения графика
+//принимает объект типа ProcessData, предназначенный для обработки вектора структур с записями из лог-файла
+void MainWindow::build_chart(ProcessData& counters){
+    int range = 0;
+    if(!data_vector.empty())
+        range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
+    if(range < 3){
+        QMap<QDateTime, int> values;
+        // функция распределения по часам
+        // values = counters.make_hours_number_map(data_vector);
+        fill_chart(values, range); // заполняем график значениями
+    } else {
+        QMap<QDate, int> values;
+        if(range > 3 && range < 31){
+            values = counters.make_date_number_map(data_vector);
+        } else {
+            values = counters.make_week_number_map(data_vector);
+        }
+        fill_chart(values, range); // заполняем график значениями
+    }
+
+}
+
 // Функция заполнения таблицы
-// принимает вектор структур записей из лог-файла
 void MainWindow::build_table(){
     if(!data_vector.isEmpty()){     // если вектор структур непустой, заполняем таблицу
         tableWidget->clearContents(); //удаляем старое содержимое из таблицы
@@ -232,7 +242,6 @@ void MainWindow::build_table(){
         }
     }
 }
-
 
 void MainWindow::update_Window(const QVector<date_time_type_msg>& data_vector)
 {

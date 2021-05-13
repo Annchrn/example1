@@ -39,12 +39,19 @@ private:
     void create_chart();
     void create_table();
     void create_tree();
-    void build_chart(ProcessData& counters);
+
     void build_table();
+
+    void build_chart(ProcessData& counters);
+    template <typename T>
+    void fill_chart(const QMap<T, int>& values, int& range);
+    template <typename T>
+    void create_axisX(QBarCategoryAxis *axisX, const QMap<T, int>& dates_values, int range);
+
     void clear_chart();
-    void create_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values, int range);
 
     QVector<date_time_type_msg> data_vector; // вектор структур, содержащий все лог-записи из файла
+
 
 };
 #endif // MAINWINDOW_H

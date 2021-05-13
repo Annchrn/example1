@@ -3,14 +3,16 @@
 
 ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
 {
-     for (const auto& structure : data_vector){
-         if (structure.type == "INF")
-             INF_count ++;
-         if (structure.type == "DBG")
-             DBG_count ++;
-         if (structure.type == "FTL")
-            FTL_count ++;
-         logs_count ++;
+    if(!data_vector.empty()){
+        for (const auto& structure : data_vector){
+            if (structure.type == "INF")
+                INF_count ++;
+            if (structure.type == "DBG")
+                DBG_count ++;
+            if (structure.type == "FTL")
+                FTL_count ++;
+            logs_count ++;
+        }
     }
 }
 
@@ -84,31 +86,21 @@ QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_
     }
     return week_number;
 }
-/*
+
 //Функция, возвращающая соответствие между 8-ю часами и количеством логов
 // принимает вектор структур data_vector
-QMap<QDate, int> ProcessData::make_date_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
-    QMap<QDate, int> period_number;
-    for(auto& structure : data_vector){
+QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
+    QMap<QDateTime, int> period_number;
+    /*for(auto& structure : data_vector){
         QDate date = structure.date_time.date();
         if(date_number.contains(date)){
             date_number[date] ++;
         } else {
             date_number[date] = 1;
         }
-    }
+    }*/
     return period_number;
 }
-
-
-
-
-
-
-*/
-
-
-
 
 
 // Функция группировки сообщений по 8 часов
