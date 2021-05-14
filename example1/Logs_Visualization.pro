@@ -23,7 +23,6 @@ HEADERS += \
     datavectormodel.h \
     mainwindow.h \
     processdata.h \
-    range_counters.h \
     readdata.h \
     windowcontroller.h
 

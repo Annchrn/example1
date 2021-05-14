@@ -52,7 +52,6 @@ QMap<QDate, int> ProcessData::make_date_number_map(const QVector<date_time_type_
     return date_number;
 }
 
-
 //Функция, возвращающая соответствие между НЕДЕЛЕЙ(месяцем) и количеством логов
 // принимает вектор структур data_vector
 QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
@@ -72,10 +71,14 @@ QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_
     QDate temp_seventh_day = temp_day.addDays(7);
 
     while (temp_seventh_day <= data_vector.last().date_time.date()){ // проходим по целым неделям в диапазоне дат вектора структур
-       while(temp_day < temp_seventh_day){
-            if(date_number.contains(temp_day))
+        while(temp_day < temp_seventh_day){
+            if(date_number.contains(temp_day)){
                 week_number[temp_seventh_day.addDays(-7)] += date_number[temp_day];
-            temp_day = temp_day.addDays(1);
+                temp_day = temp_day.addDays(1);
+            } else{
+                week_number[temp_seventh_day.addDays(-7)] += 0;
+                temp_day = temp_day.addDays(1);
+            }
         }
         temp_seventh_day = temp_seventh_day.addDays(7);
     }
@@ -90,7 +93,6 @@ QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_
 //Функция, возвращающая соответствие между 8-ю часами и количеством логов
 // принимает вектор структур data_vector
 QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
-    qDebug() << "зашёл";
     QMap<QDateTime, int> hours_number;
     if(!data_vector.empty()){
         QVector<QDateTime> time_values; // массив точек времени с промежутком 8 часов (первая точка - первое значение даты в векторе структур)
@@ -99,11 +101,6 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
             time_values.append(date_time);
             date_time = date_time.addSecs(28800);
         }
-
-//        qDebug() << "значения промежутков ";
-//        for(auto i : time_values)
-//                qDebug() << i;
-
         // заполняем массив соответствий между отрезками по 8 часов и количествои логов
         QVectorIterator<QDateTime> time_values_it(time_values);
         QDateTime current_date_time = time_values_it.next(); // присваиваем переменной первое значение из вектора с точками времени
@@ -111,14 +108,12 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
         for(auto& structure : data_vector){
             QDateTime temp_date_time = structure.date_time; // дата и время каждого сообщения в лог-файле
             if(temp_date_time >= current_date_time && temp_date_time < current_date_time.addSecs(28800)){   // если значение ещё в текущем диапазоне
-             //   qDebug() << "первое условие " << temp_date_time;
                 if(hours_number.contains(current_date_time)){
                     hours_number[current_date_time] ++;
                 } else {
                     hours_number[current_date_time] = 1;
                 }
             }else if (temp_date_time < current_date_time.addSecs(57600) && current_date_time != time_values.last()){  // если значение уже вне диапазона и точка - не последнее значение вектора отрезков, переходим к след.т.
-              //  qDebug() << "второе условие " << temp_date_time;
                 current_date_time = time_values_it.next();
                 if(hours_number.contains(current_date_time)){
                     hours_number[current_date_time] ++;
@@ -126,39 +121,21 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
                     hours_number[current_date_time] = 1;
                 }
             } else if(temp_date_time >= current_date_time.addSecs(57600) && current_date_time != time_values.last()){ // если перепрыгивает через диапазон
-                if(!hours_number.contains(current_date_time.addSecs(28800))){  //
-            //        qDebug() << "11111111111111111111111111111111111111111111111111111111";
+                if(!hours_number.contains(current_date_time.addSecs(28800))){
                     hours_number[current_date_time.addSecs(28800)] = 0; // для данного диапазона отмечаем значение "0" и идём дальше
                 }
                 current_date_time = time_values_it.next();
                 while(temp_date_time >= current_date_time.addSecs(28800) && current_date_time != time_values.last()){
                     current_date_time = time_values_it.next();
                     if(temp_date_time < current_date_time.addSecs(28800)){
-                        //добавляем
-                       hours_number[current_date_time] = 1;
-                   //    qDebug() << "третье условие " << temp_date_time << " " << current_date_time;
+                        hours_number[current_date_time] = 1;
                     } else {hours_number[current_date_time] = 0;}
                 }
-
-            } else if(current_date_time == time_values.last()){
-
             }
         }
-        qDebug() << "вектор со значениями начала 8-ми часов и количеством логов за эти 8 часов";
-        qDebug() << hours_number.size();
-        int i = 0;
-        for(auto key : hours_number.keys()){
-            qDebug() << key << " " << hours_number.value(key);
-            i += hours_number.value(key);
-        }
-        qDebug() << "всего" << i;
-
-
-
+        return hours_number;
     }
-    return hours_number;
 }
-
 
 // Функция группировки сообщений по 8 часов
 // возвращает структуру qmap(время(начало каждых 8 часов) - количество сообщений за промежуток) и счётчики
@@ -193,10 +170,3 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
 
 //Функция, возвращающая воктор сообщений с меткой
 // get_DBG_FTL_logs
-
-
-
-
-
-
-

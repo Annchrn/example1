@@ -43,12 +43,14 @@ private:
     void build_table();
 
     void build_chart(ProcessData& counters);
-    template <typename T>
-    void fill_chart(const QMap<T, int>& values, int& range);
-    template <typename T>
-    void create_axisX(QBarCategoryAxis *axisX, const QMap<T, int>& dates_values, int range);
+    void fill_qdate_chart(const QMap<QDate, int>& values, int& range);
+    void fill_qdatetime_chart(const QMap<QDateTime, int>& values, int& range);
+    void create_date_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values, int range);
+    void create_date_time_axisX(QBarCategoryAxis *axisX, const QMap<QDateTime, int>& dates_values, int range);
+
 
     void clear_chart();
+    void clear_chart_and_table();
 
     QVector<date_time_type_msg> data_vector; // вектор структур, содержащий все лог-записи из файла
 

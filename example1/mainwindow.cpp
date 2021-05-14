@@ -111,15 +111,33 @@ void MainWindow::clear_chart()
     }
 }
 
-//Функция добавления значений на ось х. Также устанавливает заголовок оси и угол наклона надписей
-// принимает указатель на ось и данные для графика
-template <typename T>
-void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<T, int>& dates_values, int range){
+void MainWindow::clear_chart_and_table(){
+QLayoutItem *child;
+if((child = ui->gridLayout->takeAt(4)) != nullptr){
+    clear_chart();
+    tableWidget->clearContents();
+    tableWidget->setRowCount(0);
+}
+delete child;
+}
+
+void MainWindow::create_date_time_axisX(QBarCategoryAxis *axisX, const QMap<QDateTime, int>& dates_values, int range){
     QStringList categories;
     if(range <= 3){
         axisX->setTitleText("Отрезки времени по 8 часов");
-        qDebug() << "для случая, когда 3 дня и меньше пока нет функции по 8 часов";
-    } else if(range > 3 && range <= 31){
+        for(auto temp_date_time : dates_values.keys()){
+           categories << "("+temp_date_time.date().toString("dd")+")"+temp_date_time.toString("hh:mm:ss")+"-"+temp_date_time.addSecs(28799).toString("hh:mm:ss");
+        }
+    }
+    axisX->append(categories);
+   // менять размер шрифта, если нужно axisX->setLabelsFont(QFont("Times", 8));
+}
+
+//Функция добавления значений на ось х. Также устанавливает заголовок оси и угол наклона надписей
+// принимает указатель на ось и данные для графика
+void MainWindow::create_date_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values, int range){
+    QStringList categories;
+    if(range > 3 && range <= 31){
         axisX->setTitleText("Даты");
         for(auto temp_date : dates_values.keys()){
            categories << temp_date.toString("dd.MM.yy");
@@ -144,8 +162,8 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QMap<T, int>& dates
 
 //Функция заполнения графика значениями
 //values - массив вершин графика, где значения для оси х имеют тип QDate
-template <typename T>
-void MainWindow::fill_chart(const QMap<T, int>& values, int& range)
+
+void MainWindow::fill_qdate_chart(const QMap<QDate, int>& values, int& range)
 {
     if(!values.empty()){        // если массив вершин графика непустой - строим график
         clear_chart(); // очищаем старое содержимое графика
@@ -153,7 +171,7 @@ void MainWindow::fill_chart(const QMap<T, int>& values, int& range)
         //заполнение значений графика
         QBarSeries* series = new QBarSeries(this);
         QBarSet *set = new QBarSet("Количество сообщений");
-        QVector<T> dates;
+        QVector<QDate> dates;
         for(const auto& key : values.keys()){
             dates << key;
             *set << values.value(key);
@@ -164,7 +182,7 @@ void MainWindow::fill_chart(const QMap<T, int>& values, int& range)
 
         // ось х
         QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
-        create_axisX(axisX, values, range);
+        create_date_axisX(axisX, values, range);
         chart->addAxis(axisX, Qt::AlignBottom);
         series->attachAxis(axisX);
 
@@ -181,14 +199,105 @@ void MainWindow::fill_chart(const QMap<T, int>& values, int& range)
         ui->gridLayoutWidget->adjustSize();
         adjustSize();
 
-} else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
-        QLayoutItem *child;
-        if((child = ui->gridLayout->takeAt(4)) != nullptr){
-            clear_chart();
-            tableWidget->clearContents();
-            tableWidget->setRowCount(0);
+    } else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
+        clear_chart_and_table();
+    }
+}
+
+
+/*
+void MainWindow::fill_qdate_chart(const processed_qdate_structure processed_data, int& range)
+struct processed_qdate_structure {
+    QMap<QDate, int>& values;
+// вектор структур, содержащий посчитанные
+QVector<>
+};
+
+{
+    if(!values.empty()){        // если массив вершин графика непустой - строим график
+        clear_chart(); // очищаем старое содержимое графика
+
+        //заполнение значений графика
+        QBarSet *setINF = new QBarSet("INF");
+        QBarSet *setDBG = new QBarSet("FTL");
+        QBarSet *setFTL = new QBarSet("DBG");
+
+        QStackedBarSeries* series = new QStackedBarSeries(this);
+        QVector<QDate> dates;
+        for(const auto& key : values.keys()){
+            dates << key;
+            case
+            *set << values.value(key);
         }
-        delete child;
+        series->append(set);
+        QChart *chart = chartView->chart();
+        chart->addSeries(series);
+
+        // ось х
+        QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
+        create_date_axisX(axisX, values, range);
+        chart->addAxis(axisX, Qt::AlignBottom);
+        series->attachAxis(axisX);
+
+        // ось у
+        QValueAxis *axisY = new QValueAxis(this);
+        axisY->setLabelFormat("%i");
+        axisY->setTitleText("Значения");
+        chart->addAxis(axisY, Qt::AlignLeft);
+        series->attachAxis(axisY);
+
+        // отображаем график
+        if(chartView->isHidden())
+            chartView->setHidden(false);
+        ui->gridLayoutWidget->adjustSize();
+        adjustSize();
+
+    } else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
+        clear_chart_and_table();
+    }
+}
+*/
+
+
+
+void MainWindow::fill_qdatetime_chart(const QMap<QDateTime, int>& values, int& range)
+{
+    if(!values.empty()){        // если массив вершин графика непустой - строим график
+        clear_chart(); // очищаем старое содержимое графика
+
+        //заполнение значений графика
+        QBarSeries* series = new QBarSeries(this);
+        QBarSet *set = new QBarSet("Количество сообщений");
+        QVector<QDateTime> dates;
+        for(const auto& key : values.keys()){
+            dates << key;
+            *set << values.value(key);
+        }
+        series->append(set);
+        QChart *chart = chartView->chart();
+        chart->addSeries(series);
+
+        // ось х
+        QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
+        create_date_time_axisX(axisX, values, range);
+        chart->addAxis(axisX, Qt::AlignBottom);
+        series->attachAxis(axisX);
+
+        // ось у
+        QValueAxis *axisY = new QValueAxis(this);
+        axisY->setLabelFormat("%i");
+        axisY->setTitleText("Значения");
+        chart->addAxis(axisY, Qt::AlignLeft);
+        series->attachAxis(axisY);
+
+        // отображаем график
+        if(chartView->isHidden())
+            chartView->setHidden(false);
+        ui->gridLayoutWidget->adjustSize();
+        adjustSize();
+
+    } else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
+        clear_chart_and_table();
     }
 }
 
@@ -201,7 +310,7 @@ void MainWindow::build_chart(ProcessData& counters){
     if(range <= 3){
         QMap<QDateTime, int> values;
         values = counters.make_hours_number_map(data_vector);
-        fill_chart(values, range); // заполняем график значениями
+        fill_qdatetime_chart(values, range); // заполняем график значениями
     } else {
         QMap<QDate, int> values;
         if(range > 3 && range < 31){
@@ -209,7 +318,7 @@ void MainWindow::build_chart(ProcessData& counters){
         } else {
             values = counters.make_week_number_map(data_vector);
         }
-        fill_chart(values, range); // заполняем график значениями
+        fill_qdate_chart(values, range); // заполняем график значениями
     }
 }
 
