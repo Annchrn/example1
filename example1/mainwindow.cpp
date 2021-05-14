@@ -198,7 +198,7 @@ void MainWindow::build_chart(ProcessData& counters){
     int range = 0;
     if(!data_vector.empty())
         range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
-    if(range < 3){
+    if(range <= 3){
         QMap<QDateTime, int> values;
         values = counters.make_hours_number_map(data_vector);
         fill_chart(values, range); // заполняем график значениями
