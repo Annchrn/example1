@@ -200,8 +200,7 @@ void MainWindow::build_chart(ProcessData& counters){
         range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
     if(range < 3){
         QMap<QDateTime, int> values;
-        // функция распределения по часам
-        // values = counters.make_hours_number_map(data_vector);
+        values = counters.make_hours_number_map(data_vector);
         fill_chart(values, range); // заполняем график значениями
     } else {
         QMap<QDate, int> values;
@@ -212,7 +211,6 @@ void MainWindow::build_chart(ProcessData& counters){
         }
         fill_chart(values, range); // заполняем график значениями
     }
-
 }
 
 // Функция заполнения таблицы

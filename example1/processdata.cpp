@@ -90,16 +90,53 @@ QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_
 //Функция, возвращающая соответствие между 8-ю часами и количеством логов
 // принимает вектор структур data_vector
 QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
-    QMap<QDateTime, int> period_number;
-    /*for(auto& structure : data_vector){
-        QDate date = structure.date_time.date();
-        if(date_number.contains(date)){
-            date_number[date] ++;
-        } else {
-            date_number[date] = 1;
+    QMap<QDateTime, int> hours_number;
+    if(!data_vector.empty()){
+        QVector<QDateTime> time_values; // массив точек времени с промежутком 8 часов
+        QDateTime date_time = data_vector[0].date_time;
+        while(date_time <= data_vector.last().date_time){
+            time_values.append(date_time);
+            date_time = date_time.addSecs(28800);
         }
-    }*/
-    return period_number;
+//        if(date_time < data_vector.last().date_time){
+//            time_values.append(date_time);
+//        }
+        qDebug() << "значения промежутков ";
+        for(auto i : time_values)
+                qDebug() << i;
+
+        // получаем массив соответствий между отрезками по 8 часов и количествои логов
+        QVectorIterator<QDateTime> time_values_it(time_values);
+        QDateTime current_date_time = time_values_it.next();
+        for(auto& structure : data_vector){
+            QDateTime temp_date_time = structure.date_time; // дата и время каждого сообщения в лог-файле
+            if((temp_date_time >= current_date_time && temp_date_time < current_date_time.addSecs(28800)) || current_date_time == time_values.last()){
+                if(hours_number.contains(current_date_time)){
+                    hours_number[current_date_time] ++;
+                } else {
+                    hours_number[current_date_time] = 1;
+                }
+            }else if (temp_date_time > current_date_time  && temp_date_time < current_date_time.addSecs(28800) && current_date_time != time_values.last()){
+                current_date_time = time_values_it.next();
+                if(hours_number.contains(current_date_time)){
+                    hours_number[current_date_time] ++;
+                } else {
+                    hours_number[current_date_time] = 1;
+                }
+            }
+        }
+        qDebug() << "вектор со значениями начала 8-ми часов и количеством логов за эти 8 часов";
+        int i = 0;
+        for(auto key : hours_number.keys()){
+            qDebug() << key << " " << hours_number.value(key);
+            i += hours_number.value(key);
+        }
+        qDebug() << "всего" << i;
+
+
+
+    }
+    return hours_number;
 }
 
 

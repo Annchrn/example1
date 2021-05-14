@@ -8,10 +8,6 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QDateTime>
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonValue>
 #include <QRegularExpression>
 
 
