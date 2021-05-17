@@ -37,24 +37,46 @@ int ProcessData::get_FTL_count()
     return FTL_count;
 }
 
+void ProcessData::count_dates_types(QMap<QDate, QMap<QString, int>>& types_map, QString& type, const QDate& temp_seventh_day)
+{
+    if(type == "INF")
+        types_map[temp_seventh_day]["INF"]++;
+    if(type == "DBG")
+        types_map[temp_seventh_day]["DBG"]++;
+    if(type == "FTL")
+        types_map[temp_seventh_day]["FTL"]++;
+}
+
 //Функция, возвращающая соответствие между датой и количеством логов
 // принимает вектор структур data_vector
-QMap<QDate, int> ProcessData::make_date_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
+processed_qdate ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector){
+    processed_qdate processed_data_structure;
     QMap<QDate, int> date_number;
+    QMap<QDate, QMap<QString, int>> types_map;
+
     for(auto& structure : data_vector){
         QDate date = structure.date_time.date();
+        QString type = structure.type;
         if(date_number.contains(date)){
             date_number[date] ++;
         } else {
             date_number[date] = 1;
         }
+        count_dates_types(types_map, type, date);
     }
-    return date_number;
+
+    processed_data_structure.values = date_number;
+    processed_data_structure.type_counters = types_map;
+    return processed_data_structure;
 }
 
-//Функция, возвращающая соответствие между НЕДЕЛЕЙ(месяцем) и количеством логов
+ //Функция, возвращающая структуру, содержащую соответствие между НЕДЕЛЕЙ и количеством логов + количество сообщений каждого типа за каждую неделю
 // принимает вектор структур data_vector
-QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
+processed_qdate ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector){
+    processed_qdate processed_data_structure;
+    QMap<QDate, int> week_number;
+    QMap<QDate, QMap<QString, int>> types_map;
+
     //получаем соотвествие между днём и количеством логов
     QMap<QDate, int> date_number;
     for(auto& structure : data_vector){
@@ -66,11 +88,10 @@ QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_
         }
     }
     // считаем количество логов по неделям с первого дня в векторе структур
-    QMap<QDate, int> week_number;
     QDate temp_day = data_vector[0].date_time.date();
     QDate temp_seventh_day = temp_day.addDays(7);
 
-    while (temp_seventh_day <= data_vector.last().date_time.date()){ // проходим по целым неделям в диапазоне дат вектора структур
+    while (temp_seventh_day <= data_vector.last().date_time.date()){ // проходим по неделям в диапазоне дат вектора структур
         while(temp_day < temp_seventh_day){
             if(date_number.contains(temp_day)){
                 week_number[temp_seventh_day.addDays(-7)] += date_number[temp_day];
@@ -87,13 +108,49 @@ QMap<QDate, int> ProcessData::make_week_number_map(const QVector<date_time_type_
             week_number[temp_seventh_day.addDays(-7)] += date_number[temp_day];
         temp_day = temp_day.addDays(1);
     }
-    return week_number;
+
+   // for(auto key : week_number.keys())
+     //   qDebug() << key << week_number.value(key);
+
+    //
+    QList<QDate> list_dates = week_number.keys(); // даты по неделям
+    QListIterator<QDate> temp_date_it(list_dates);
+    QDate temp_date = temp_date_it.next();
+    for(auto& structure : data_vector){
+        QString type = structure.type;
+        if (structure.date_time.date() <= temp_date || temp_date==list_dates.last()){
+            count_dates_types(types_map, type, temp_date);
+        } else {
+            temp_date = temp_date_it.next();
+            count_dates_types(types_map, type, temp_date);
+        }
+    }
+
+
+    for(auto key : types_map.keys())
+        qDebug() << key << types_map.value(key);
+    processed_data_structure.values = week_number;
+    processed_data_structure.type_counters = types_map;
+    return processed_data_structure;
 }
 
-//Функция, возвращающая соответствие между 8-ю часами и количеством логов
+ //Функция, возвращающая соответствие между 8-ю часами и количеством логов
 // принимает вектор структур data_vector
-QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_type_msg> &data_vector){  // возвращать структуру со счётчиками
+void ProcessData::count_hours_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
+{
+    if(type == "INF")
+        types_map[current_date_time]["INF"]++;
+    if(type == "DBG")
+        types_map[current_date_time]["DBG"]++;
+    if(type == "FTL")
+        types_map[current_date_time]["FTL"]++;
+}
+
+processed_qdatetime ProcessData::make_hours_number_map(const QVector<date_time_type_msg> &data_vector){
+    processed_qdatetime processed_data_structure;
     QMap<QDateTime, int> hours_number;
+    QMap<QDateTime, QMap<QString, int>> types_map;
+
     if(!data_vector.empty()){
         QVector<QDateTime> time_values; // массив точек времени с промежутком 8 часов (первая точка - первое значение даты в векторе структур)
         QDateTime date_time = data_vector[0].date_time;
@@ -107,12 +164,15 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
 
         for(auto& structure : data_vector){
             QDateTime temp_date_time = structure.date_time; // дата и время каждого сообщения в лог-файле
+            QString type = structure.type;
+
             if(temp_date_time >= current_date_time && temp_date_time < current_date_time.addSecs(28800)){   // если значение ещё в текущем диапазоне
                 if(hours_number.contains(current_date_time)){
                     hours_number[current_date_time] ++;
                 } else {
                     hours_number[current_date_time] = 1;
                 }
+                count_hours_types(types_map, type, current_date_time);
             }else if (temp_date_time < current_date_time.addSecs(57600) && current_date_time != time_values.last()){  // если значение уже вне диапазона и точка - не последнее значение вектора отрезков, переходим к след.т.
                 current_date_time = time_values_it.next();
                 if(hours_number.contains(current_date_time)){
@@ -120,6 +180,7 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
                 } else {
                     hours_number[current_date_time] = 1;
                 }
+                count_hours_types(types_map, type, current_date_time);
             } else if(temp_date_time >= current_date_time.addSecs(57600) && current_date_time != time_values.last()){ // если перепрыгивает через диапазон
                 if(!hours_number.contains(current_date_time.addSecs(28800))){
                     hours_number[current_date_time.addSecs(28800)] = 0; // для данного диапазона отмечаем значение "0" и идём дальше
@@ -131,42 +192,15 @@ QMap<QDateTime, int> ProcessData::make_hours_number_map(const QVector<date_time_
                         hours_number[current_date_time] = 1;
                     } else {hours_number[current_date_time] = 0;}
                 }
+                count_hours_types(types_map, type, current_date_time);
             }
         }
-        return hours_number;
+
+        processed_data_structure.values = hours_number;
+        processed_data_structure.type_counters = types_map;
     }
+           return processed_data_structure;
 }
-
-// Функция группировки сообщений по 8 часов
-// возвращает структуру qmap(время(начало каждых 8 часов) - количество сообщений за промежуток) и счётчики
-
-
-// функция группировки по месяцам
-// возвращает структуру qmap и счётчики
-
-// функция группировки по неделям
-// возвращает структуру qmap и счётчики
-
 
 //Функция, возвращающая воктор сообщений с меткой INF
 // get_INF_logs
-
-
-//Функция, возвращающая воктор сообщений с меткой
-// get_DBG_logs
-
-
-//Функция, возвращающая воктор сообщений с меткой
-// get_FTL_logs
-
-
-//Функция, возвращающая воктор сообщений с меткой
-// get_INF_DBG_logs
-
-
-//Функция, возвращающая воктор сообщений с меткой
-// get_INF_FTL_logs
-
-
-//Функция, возвращающая воктор сообщений с меткой
-// get_DBG_FTL_logs

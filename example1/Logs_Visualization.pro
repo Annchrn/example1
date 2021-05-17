@@ -23,6 +23,7 @@ HEADERS += \
     datavectormodel.h \
     mainwindow.h \
     processdata.h \
+    processed_data_struct.h \
     readdata.h \
     windowcontroller.h
 

@@ -43,10 +43,10 @@ private:
     void build_table();
 
     void build_chart(ProcessData& counters);
-    void fill_qdate_chart(const QMap<QDate, int>& values, int& range);
-    void fill_qdatetime_chart(const QMap<QDateTime, int>& values, int& range);
-    void create_date_axisX(QBarCategoryAxis *axisX, const QMap<QDate, int>& dates_values, int range);
-    void create_date_time_axisX(QBarCategoryAxis *axisX, const QMap<QDateTime, int>& dates_values, int range);
+    void fill_qdate_chart(const QMap<QDate, QMap<QString, int>>& types_map, int& range);
+    void fill_qdatetime_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range);
+    void create_date_axisX(QBarCategoryAxis *axisX, const QVector<QDate>& dates_values, int range);
+    void create_date_time_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, int range);
 
 
     void clear_chart();
