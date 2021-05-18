@@ -17,12 +17,9 @@ public:
     int get_DBG_count();
     int get_FTL_count();
 
-    processed_qdatetime make_hours_number_map(const QVector<date_time_type_msg> &data_vector);
-    processed_qdate make_week_number_map(const QVector<date_time_type_msg> &data_vector);
-    processed_qdate make_date_number_map(const QVector<date_time_type_msg> &data_vector);
-    QMap<QDate, QMap<QString, int>> emake_date_number_map(const QVector<date_time_type_msg>& data_vector);
-    QMap<QDate, QMap<QString, int>> emake_week_number_map(const QVector<date_time_type_msg>& data_vector);
-
+    QMap<QDate, QMap<QString, int>> make_date_number_map(const QVector<date_time_type_msg>& data_vector);
+    QMap<QDate, QMap<QString, int>> make_week_number_map(const QVector<date_time_type_msg>& data_vector);
+    QMap<QDateTime, QMap<QString, int>> make_hours_number_map(const QVector<date_time_type_msg>& data_vector);
 
 private:
     int logs_count = 0, INF_count = 0, DBG_count = 0, FTL_count = 0;

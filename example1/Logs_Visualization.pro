@@ -19,6 +19,7 @@ SOURCES += \
 
 
 HEADERS += \
+    Data_Model.h \
     data_structure.h \
     datavectormodel.h \
     mainwindow.h \
