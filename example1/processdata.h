@@ -20,6 +20,8 @@ public:
     processed_qdatetime make_hours_number_map(const QVector<date_time_type_msg> &data_vector);
     processed_qdate make_week_number_map(const QVector<date_time_type_msg> &data_vector);
     processed_qdate make_date_number_map(const QVector<date_time_type_msg> &data_vector);
+    QMap<QDate, QMap<QString, int>> emake_date_number_map(const QVector<date_time_type_msg>& data_vector);
+    QMap<QDate, QMap<QString, int>> emake_week_number_map(const QVector<date_time_type_msg>& data_vector);
 
 
 private:

@@ -183,7 +183,7 @@ void MainWindow::fill_qdate_chart(const QMap<QDate, int>& values, int& range)
 
         // ось х
         QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
-        create_date_axisX(axisX, values, range);
+        create_date_axisX(axisX, dates, range);
         chart->addAxis(axisX, Qt::AlignBottom);
         series->attachAxis(axisX);
 
@@ -204,8 +204,8 @@ void MainWindow::fill_qdate_chart(const QMap<QDate, int>& values, int& range)
         clear_chart_and_table();
     }
 }
-*/
 
+*/
 
 void MainWindow::fill_qdate_chart(const QMap<QDate, QMap<QString, int>>& types_map, int& range)
 {
@@ -321,7 +321,6 @@ void MainWindow::fill_qdatetime_chart(const QMap<QDateTime, QMap<QString, int>>&
         QBarSet *setFTL = new QBarSet("FTL");
 
         QVector<QDateTime> values;
-        int i = 0;
         for(auto& key : types_map.keys()){
             values.append(key);
             for(auto types_key : types_map.value(key).keys()){
@@ -341,7 +340,6 @@ void MainWindow::fill_qdatetime_chart(const QMap<QDateTime, QMap<QString, int>>&
 
         setINF->setColor(QColor(153, 204, 255));
         setDBG->setColor(QColor(91,146,208));
-        // setFTL->setColor(QColor(138,116,189));
         setFTL->setColor(QColor(0,76,153));
 
         QChart *chart = chartView->chart();
@@ -391,11 +389,13 @@ void MainWindow::build_chart(ProcessData& counters){
         if(range > 3 && range < 31){
             processed_qdate processed_data = counters.make_date_number_map(data_vector);
             values = processed_data.values;
-            types_map = processed_data.type_counters;
+           // types_map = processed_data.type_counters;
+            types_map = counters.emake_date_number_map(data_vector);
         } else {
-            processed_qdate processed_data = counters.make_week_number_map(data_vector);
-            values = processed_data.values;
-            types_map = processed_data.type_counters;
+          //  processed_qdate processed_data = counters.make_week_number_map(data_vector);
+           // values = processed_data.values;
+           // types_map = processed_data.type_counters;
+            types_map = counters.emake_week_number_map(data_vector);
         }
         fill_qdate_chart(types_map, range); // заполняем график значениями
     }
