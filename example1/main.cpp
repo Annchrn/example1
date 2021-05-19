@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "windowcontroller.h"
 
 #include <QApplication>
 
@@ -11,6 +12,7 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
     MainWindow w;
+    WindowController controller(&w); // создаём контроллер
     w.show();
     w.setWindowTitle("Визуализация лог-файла");
     return a.exec();

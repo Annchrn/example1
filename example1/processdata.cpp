@@ -98,7 +98,7 @@ QMap<QDate, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<
     }
     return types_map;
 }
-
+/*
 
 void ProcessData::count_hours_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
 {
@@ -149,6 +149,58 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVe
     }
     return types_map;
 }
+*/
+
+void ProcessData::count_hours_types(QMap<QString, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
+{
+    if(!types_map.contains(current_date_time.toString())){
+        types_map[current_date_time.toString()]["INF"] = 0;
+        types_map[current_date_time.toString()]["DBG"] = 0;
+        types_map[current_date_time.toString()]["FTL"] = 0;
+    }
+    if(type == "INF")
+        types_map[current_date_time.toString()]["INF"]++;
+    if(type == "DBG")
+        types_map[current_date_time.toString()]["DBG"]++;
+    if(type == "FTL")
+        types_map[current_date_time.toString()]["FTL"]++;
+}
+
+
+//Функция, возвращающая соответствие между 8-ю часами и количеством логов
+// принимает вектор структур data_vector
+QMap<QString, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector){
+    QMap<QString, QMap<QString, int>> types_map;
+
+    QDateTime temp_day = data_vector[0].date_time;
+
+    for(auto structure : data_vector){
+        QDateTime date = structure.date_time;
+        QString type = structure.type;
+        if (date < temp_day.addSecs(28800)){
+            count_hours_types(types_map, type, temp_day);
+        } else {
+            if(date < temp_day.addSecs(28800)){ // если не перескакиваем через неделю
+                temp_day = temp_day.addSecs(28800);
+                count_hours_types(types_map, type, temp_day);
+            } else{
+                temp_day = temp_day.addSecs(28800);
+                while(date > temp_day){
+                    if (date < temp_day.addSecs(28800))
+                        break;
+                    types_map[temp_day.toString()]["INF"] = 0;
+                    types_map[temp_day.toString()]["DBG"] = 0;
+                    types_map[temp_day.toString()]["FTL"] = 0;
+                    temp_day = temp_day.addSecs(28800);
+                }
+                //записываем значение для temp_date
+                count_hours_types(types_map, type, temp_day);
+            }
+        }
+    }
+    return types_map;
+}
+
 
 //Функция, возвращающая воктор сообщений с меткой INF
 // get_INF_logs

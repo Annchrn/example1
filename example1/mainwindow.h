@@ -5,6 +5,7 @@
 #include <QtCharts>
 #include "data_structure.h"
 #include "processdata.h"
+#include "Data_Model.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -25,6 +26,12 @@ private slots:
     void on_pushButton_clean_clicked();
 
     void on_pushButton_2_clicked();
+    void GetDataAndFillWindow(Data_Model &data_model);
+
+signals:
+    void OpenFileClicked(const QString& filename);
+    void CleanFiltersClicked();
+    void RestoreDataRange();
 
 private:
     Ui::MainWindow *ui;
@@ -43,12 +50,8 @@ private:
     void build_table();
 
     void build_chart(ProcessData& counters);
-    void fill_qdate_chart(const QMap<QDate, QMap<QString, int>>& types_map, int& range);
- //  void fill_qdate_chart(const QMap<QDate, int>& values, int& range);
-    void fill_qdatetime_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range);
-    void create_date_axisX(QBarCategoryAxis *axisX, const QVector<QDate>& dates_values, int range);
-    void create_date_time_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, int range);
-
+    void fill_chart(const QMap<QString, QMap<QString, int>>& types_map, int& range);
+    void create_axisX(QBarCategoryAxis *axisX, const QVector<QString>& dates_values, int range);
 
     void clear_chart();
     void clear_chart_and_table();

@@ -19,12 +19,12 @@ public:
 
     QMap<QDate, QMap<QString, int>> make_date_number_map(const QVector<date_time_type_msg>& data_vector);
     QMap<QDate, QMap<QString, int>> make_week_number_map(const QVector<date_time_type_msg>& data_vector);
-    QMap<QDateTime, QMap<QString, int>> make_hours_number_map(const QVector<date_time_type_msg>& data_vector);
+    QMap<QString, QMap<QString, int>> make_hours_number_map(const QVector<date_time_type_msg>& data_vector);
 
 private:
     int logs_count = 0, INF_count = 0, DBG_count = 0, FTL_count = 0;
 
-    void count_hours_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time);
+    void count_hours_types(QMap<QString, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time);
     void count_dates_types(QMap<QDate, QMap<QString, int>>& types_map, QString& type, const QDate& temp_seventh_day);
 };
 

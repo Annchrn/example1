@@ -4,7 +4,7 @@
 #include <QString>
 #include <QMap>
 
-struct data_model{
+struct Data_Model{
     QMap<QString, QMap<QString, int>> types_map;
 
 };
