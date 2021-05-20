@@ -3,204 +3,133 @@
 
 ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
 {
-    if(!data_vector.empty()){
-        for (const auto& structure : data_vector){
-            if (structure.type == "INF")
-                INF_count ++;
-            if (structure.type == "DBG")
-                DBG_count ++;
-            if (structure.type == "FTL")
-                FTL_count ++;
-            logs_count ++;
+    // строим модель для таблицы и блока фильтров
+    for(const auto& structure : data_vector){
+        //заполняем данные для таблицы
+        table_map[structure.date_time] = structure.message;
+        // заполняем данные для фильтров
+        filters_struct.types_map[structure.type]++;
+    }
+
+    // строим модель для графика
+    int range = 0;
+    if(!data_vector.empty())
+        range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
+    if(range <= 3){
+        chart_map = make_hours_number_map(data_vector);
+    } else {
+        if(range > 3 && range < 31){
+            chart_map = make_date_number_map(data_vector);
+        } else {
+            chart_map = make_week_number_map(data_vector);
         }
+     }
+}
+
+//Функции доступа
+Filters_structure ProcessData::get_filters_struct(){
+    return filters_struct;
+}
+
+QMap<QDateTime, QMap<QString, int>> ProcessData::get_chart_map(){
+    return chart_map;
+}
+
+QMap<QDateTime, QString> ProcessData::get_table_map(){
+    return table_map;
+}
+
+// Функция добавления
+void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
+{
+    if(!types_map.contains(current_date_time)){
+        for(const auto& type_from_list : filters_struct.types_map.keys())
+            types_map[current_date_time][type_from_list] = 0;
     }
+    types_map[current_date_time][type] ++;
 }
 
-// Функции доступа
-int ProcessData::get_logs_count()
-{
-    return logs_count;
-}
+ QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector){
+    QMap<QDateTime, QMap<QString, int>> values_map;
 
-int ProcessData::get_INF_count()
-{
-    return INF_count;
-}
-
-int ProcessData::get_DBG_count()
-{
-    return DBG_count;
-}
-
-int ProcessData::get_FTL_count()
-{
-    return FTL_count;
-}
-
-void ProcessData::count_dates_types(QMap<QDate, QMap<QString, int>>& types_map, QString& type, const QDate& temp_date)
-{
-    if(!types_map.contains(temp_date)){
-        types_map[temp_date]["INF"] = 0;
-        types_map[temp_date]["DBG"] = 0;
-        types_map[temp_date]["FTL"] = 0;
-    }
-    if(type == "INF")
-        types_map[temp_date]["INF"]++;
-    if(type == "DBG")
-        types_map[temp_date]["DBG"]++;
-    if(type == "FTL")
-        types_map[temp_date]["FTL"]++;
-}
-
- QMap<QDate, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector){
-    QMap<QDate, QMap<QString, int>> values_map;
-
-    for(auto& structure : data_vector){
+    for(const auto& structure : data_vector){  // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
         QString type = structure.type;
-        count_dates_types(values_map, type, date);
+        QDateTime date_time(date);
+        count_types(values_map, type, date_time);
     }
-  //  for(auto key : values_map.keys())
-   //     qDebug() << key << values_map.value(key);
     return values_map;
 }
 
  //Функция, возвращающая структуру, содержащую соответствие между НЕДЕЛЕЙ и количеством логов + количество сообщений каждого типа за каждую неделю
 // принимает вектор структур data_vector
-QMap<QDate, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector){
-    QMap<QDate, QMap<QString, int>> types_map;
+QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector){
+    QMap<QDateTime, QMap<QString, int>> types_map;
 
     QDate temp_day = data_vector[0].date_time.date();
 
-    for(auto structure : data_vector){
+    for(const auto& structure : data_vector){ // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
         QString type = structure.type;
         if (date < temp_day.addDays(7)){
-            count_dates_types(types_map, type, temp_day);
+            QDateTime temp_date_time(temp_day);
+            count_types(types_map, type, temp_date_time);
         } else {
             if(date < temp_day.addDays(7)){ // если не перескакиваем через неделю
                 temp_day = temp_day.addDays(7);
-                count_dates_types(types_map, type, temp_day);
+                QDateTime temp_date_time(temp_day);
+                count_types(types_map, type, temp_date_time);
             } else{
                 temp_day = temp_day.addDays(7);
                 while(date > temp_day){
                     if (date < temp_day.addDays(7))
                         break;
-                    types_map[temp_day]["INF"] = 0;
-                    types_map[temp_day]["DBG"] = 0;
-                    types_map[temp_day]["FTL"] = 0;
+                    for(const auto& type : filters_struct.types_map.keys()){
+                        QDateTime temp_date_time(temp_day);
+                        types_map[temp_date_time][type] = 0;
+                    }
                     temp_day = temp_day.addDays(7);
                 }
-                //записываем значение для temp_date
-                count_dates_types(types_map, type, temp_day);
+                //записываем значение для temp_day
+                QDateTime temp_date_time(temp_day);
+                count_types(types_map, type, temp_date_time);
             }
         }
     }
     return types_map;
 }
-/*
-
-void ProcessData::count_hours_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
-{
-    if(!types_map.contains(current_date_time)){
-        types_map[current_date_time]["INF"] = 0;
-        types_map[current_date_time]["DBG"] = 0;
-        types_map[current_date_time]["FTL"] = 0;
-    }
-    if(type == "INF")
-        types_map[current_date_time]["INF"]++;
-    if(type == "DBG")
-        types_map[current_date_time]["DBG"]++;
-    if(type == "FTL")
-        types_map[current_date_time]["FTL"]++;
-}
-
 
 //Функция, возвращающая соответствие между 8-ю часами и количеством логов
 // принимает вектор структур data_vector
 QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector){
     QMap<QDateTime, QMap<QString, int>> types_map;
 
-    QDateTime temp_day = data_vector[0].date_time;
+    QDateTime temp_date_time = data_vector[0].date_time;
 
-    for(auto structure : data_vector){
+    for(auto structure : data_vector){   // проходим по вектору структур (все сообщения лог-файла)
         QDateTime date = structure.date_time;
         QString type = structure.type;
-        if (date < temp_day.addSecs(28800)){
-            count_hours_types(types_map, type, temp_day);
+        if (date < temp_date_time.addSecs(28800)){
+            count_types(types_map, type, temp_date_time);
         } else {
-            if(date < temp_day.addSecs(28800)){ // если не перескакиваем через неделю
-                temp_day = temp_day.addSecs(28800);
-                count_hours_types(types_map, type, temp_day);
+            if(date < temp_date_time.addSecs(28800)){ // если не перескакиваем через неделю
+                temp_date_time = temp_date_time.addSecs(28800);
+                QString str_temp_date_time = temp_date_time.toString();
+                count_types(types_map, type, temp_date_time);
             } else{
-                temp_day = temp_day.addSecs(28800);
-                while(date > temp_day){
-                    if (date < temp_day.addSecs(28800))
+                temp_date_time = temp_date_time.addSecs(28800);
+                while(date > temp_date_time){
+                    if (date < temp_date_time.addSecs(28800))
                         break;
-                    types_map[temp_day]["INF"] = 0;
-                    types_map[temp_day]["DBG"] = 0;
-                    types_map[temp_day]["FTL"] = 0;
-                    temp_day = temp_day.addSecs(28800);
+                    for(const auto& type : filters_struct.types_map.keys())
+                        types_map[temp_date_time][type] = 0;
+                    temp_date_time = temp_date_time.addSecs(28800);
                 }
                 //записываем значение для temp_date
-                count_hours_types(types_map, type, temp_day);
+                QString str_temp_date_time = temp_date_time.toString();
+                count_types(types_map, type, temp_date_time);
             }
         }
     }
     return types_map;
 }
-*/
-
-void ProcessData::count_hours_types(QMap<QString, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
-{
-    if(!types_map.contains(current_date_time.toString())){
-        types_map[current_date_time.toString()]["INF"] = 0;
-        types_map[current_date_time.toString()]["DBG"] = 0;
-        types_map[current_date_time.toString()]["FTL"] = 0;
-    }
-    if(type == "INF")
-        types_map[current_date_time.toString()]["INF"]++;
-    if(type == "DBG")
-        types_map[current_date_time.toString()]["DBG"]++;
-    if(type == "FTL")
-        types_map[current_date_time.toString()]["FTL"]++;
-}
-
-
-//Функция, возвращающая соответствие между 8-ю часами и количеством логов
-// принимает вектор структур data_vector
-QMap<QString, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector){
-    QMap<QString, QMap<QString, int>> types_map;
-
-    QDateTime temp_day = data_vector[0].date_time;
-
-    for(auto structure : data_vector){
-        QDateTime date = structure.date_time;
-        QString type = structure.type;
-        if (date < temp_day.addSecs(28800)){
-            count_hours_types(types_map, type, temp_day);
-        } else {
-            if(date < temp_day.addSecs(28800)){ // если не перескакиваем через неделю
-                temp_day = temp_day.addSecs(28800);
-                count_hours_types(types_map, type, temp_day);
-            } else{
-                temp_day = temp_day.addSecs(28800);
-                while(date > temp_day){
-                    if (date < temp_day.addSecs(28800))
-                        break;
-                    types_map[temp_day.toString()]["INF"] = 0;
-                    types_map[temp_day.toString()]["DBG"] = 0;
-                    types_map[temp_day.toString()]["FTL"] = 0;
-                    temp_day = temp_day.addSecs(28800);
-                }
-                //записываем значение для temp_date
-                count_hours_types(types_map, type, temp_day);
-            }
-        }
-    }
-    return types_map;
-}
-
-
-//Функция, возвращающая воктор сообщений с меткой INF
-// get_INF_logs

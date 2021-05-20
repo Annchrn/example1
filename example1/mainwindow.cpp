@@ -148,17 +148,18 @@ void MainWindow::clear_chart_and_table(){
 
 // Функция заполнения и построения графика, где даты имеют тип QDateTime
 // Принимает массив с данными для графика и промежуток времени в днях
-void MainWindow::fill_chart(const QMap<QString, QMap<QString, int>>& types_map, int& range)
+void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range)
 {
     if(!types_map.empty()){        // если массив вершин графика непустой - строим график
         clear_chart(); // очищаем старое содержимое графика
 
         //заполнение значений графика
+        QVector<QBarSet> set_vector;
         QBarSet *setINF = new QBarSet("INF");
         QBarSet *setDBG = new QBarSet("DBG");
         QBarSet *setFTL = new QBarSet("FTL");
 
-        QVector<QString> values;
+        QVector<QDateTime> values;
         for(auto& key : types_map.keys()){
             values.append(key);
             for(auto types_key : types_map.value(key).keys()){
@@ -211,35 +212,30 @@ void MainWindow::fill_chart(const QMap<QString, QMap<QString, int>>& types_map, 
 
 //Функция заполнения оси Х значениями типа QDateTime. Также устанавливает заголовок оси и угол наклона надписей
 // принимает указатель на ось, ссылку на вектор значений и промежуток времени в днях
-void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QString>& dates_values, int range){
+void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, int range){
     QStringList categories;
-    if(range <= 3){
+    if(range <= 259200){
         axisX->setTitleText("Отрезки времени по 8 часов");
         for(auto temp_date_time : dates_values){
-            //QDateTime temp_date_time = QDateTime::fromString(as,time_format);
-            //categories << "("+temp_date_time.date().toString("dd.MM")+") "+temp_date_time.toString("hh:mm:ss")+"-"+temp_date_time.addSecs(28799).toString("hh:mm:ss");
-            categories << temp_date_time;
+            if(temp_date_time != dates_values.last()){
+                categories << "("+temp_date_time.date().toString("dd.MM")+") "+temp_date_time.toString("hh:mm:ss")+"-" +temp_date_time.addSecs(28799).toString("hh:mm:ss");
+            } else{
+                categories << "("+temp_date_time.date().toString("dd.MM")+") "+temp_date_time.toString("hh:mm:ss")+"-" +dates_values.first().addSecs(range).toString("hh:mm:ss");
+            }
         }
-    } else if(range > 3 && range <= 31){
+    } else if(range > 259200 && range <= 2678400){
         axisX->setTitleText("Даты");
-        for(auto temp_date_time : dates_values){
-           // categories << temp_date.toString("dd.MM.yy");
-
-            categories << temp_date_time;
-        }
+        for(auto temp_date_time : dates_values)
+           categories << temp_date_time.toString("dd.MM.yy");
         if(categories.size() > 15)
             axisX->setLabelsAngle(-90);
-    } else if(range > 31) {
+    } else if(range > 2678400) {
         axisX->setTitleText("Недели");
-        auto last_date = dates_values.last();
         for(auto temp_date_time : dates_values){
-            if(temp_date_time != last_date){
-               // categories << temp_date.toString("dd.MM")   + " - " +  temp_date.addDays(7).toString("dd.MM.yy");
-
-            categories << temp_date_time;
+            if(temp_date_time != dates_values.last()){
+                categories << temp_date_time.toString("dd.MM")   + " - " +  temp_date_time.addSecs(518400).toString("dd.MM.yy");
             }else {
-               //categories << temp_date.toString("dd.MM")   + " - " +  dates_values.first().addDays(range).toString("dd.MM.yy");
-                categories << temp_date_time;
+               categories << temp_date_time.toString("dd.MM")   + " - " +  dates_values.first().addSecs(range).toString("dd.MM.yy");
             }
         }
         if(categories.size() > 10)
@@ -255,20 +251,9 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QString>& d
 void MainWindow::build_chart(ProcessData& counters){
     int range = 0;
     if(!data_vector.empty())
-        range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
-    if(range <= 3){
-        QMap<QString, QMap<QString, int>> types_map = counters.make_hours_number_map(data_vector);
-        fill_qdatetime_chart(types_map, range); // заполняем график значениями
-    } else {
-        QMap<QDate, int> values;
-        QMap<QDate, QMap<QString, int>> types_map;
-        if(range > 3 && range < 31){
-            types_map = counters.make_date_number_map(data_vector);
-        } else {
-            types_map = counters.make_week_number_map(data_vector);
-        }
-        fill_qdate_chart(types_map, range); // заполняем график значениями
-    }
+        range = data_vector[0].date_time.secsTo(data_vector.last().date_time); // количество дней в лог-файле
+    fill_chart(counters.get_chart_map(), range); // заполняем график значениями
+
 }
 
 // Функция заполнения таблицы
@@ -321,7 +306,7 @@ void MainWindow::on_pushButton_clicked()
     build_table();
 
     // отображение данных о лог-файле
-    ui->label_3->setText("Всего записей: " + QString::number(counters.get_logs_count()));
+    //ui->label_3->setText("Всего записей: " + QString::number(data_vector.size()));
     if(!data_vector.empty()){
         QDateTime start = data_vector[0].date_time;
         QDateTime finish = data_vector.last().date_time;

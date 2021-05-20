@@ -50,8 +50,8 @@ private:
     void build_table();
 
     void build_chart(ProcessData& counters);
-    void fill_chart(const QMap<QString, QMap<QString, int>>& types_map, int& range);
-    void create_axisX(QBarCategoryAxis *axisX, const QVector<QString>& dates_values, int range);
+    void fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range);
+    void create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, int range);
 
     void clear_chart();
     void clear_chart_and_table();

@@ -50,7 +50,7 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
     try {
     while (!stream.atEnd()){
             QString line = stream.readLine();
-            QRegularExpression reg("(\\d{2}/\\d{2}/\\d{4}) (\\d{2}:\\d{2}:\\d{2}) (INF|DBG|FTL|WRN|ALL) (.*)");
+            QRegularExpression reg("(\\d{2}/\\d{2}/\\d{4}) (\\d{2}:\\d{2}:\\d{2}) (INF|DBG|FTL|WRN|ALL) (.*)"); // тут считывать просто слово
             QRegularExpressionMatch reg_match = reg.match(line);
 
             if(reg_match.hasMatch()){

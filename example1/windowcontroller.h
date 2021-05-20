@@ -17,9 +17,9 @@ private slots:
     void CleanFiltersClicked_handler();
     void RestoreDataRange_handler();
 
-    void SendDataModelToForm(Data_Model &data_model);
 signals:
     // контроллер отправляет сигналы о том, что нужно обоработать модель данных
+    void SendDataModelToForm(Data_Model &data_model);
 
 private:
     MainWindow *window;
