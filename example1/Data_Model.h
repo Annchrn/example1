@@ -4,6 +4,7 @@
 #include <QString>
 #include <QMap>
 #include <QDateTime>
+#include <data_structure.h>
 
 struct Filters_structure{
     QMap<QString, int> types_map;
@@ -12,10 +13,11 @@ struct Filters_structure{
 };
 
 struct Data_Model{
+    int time_range;
     QMap<QDateTime, QMap<QString, int>> chart_map;
     Filters_structure filters_struct;
     QMap<QDateTime, QString> table_map;
+    QVector<date_time_type_msg> data_vector;
 };
-
 
 #endif // DATA_MODEL_H

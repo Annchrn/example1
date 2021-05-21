@@ -15,7 +15,6 @@ ReadData::ReadData(const QString& new_filename)  //конструктор
 {
     filename = new_filename;
     QStringList list = filename.split(".");
-    file_type = list.at(list.count()-1);
 }
 
 //Функция открытия файла
@@ -50,7 +49,7 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
     try {
     while (!stream.atEnd()){
             QString line = stream.readLine();
-            QRegularExpression reg("(\\d{2}/\\d{2}/\\d{4}) (\\d{2}:\\d{2}:\\d{2}) (INF|DBG|FTL|WRN|ALL) (.*)"); // тут считывать просто слово
+            QRegularExpression reg("(\\d{2}/\\d{2}/\\d{4}) (\\d{2}:\\d{2}:\\d{2}) (\\w+) (.*)");
             QRegularExpressionMatch reg_match = reg.match(line);
 
             if(reg_match.hasMatch()){
@@ -77,15 +76,10 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
     return v_data;
 }
 
-//Функция чтения файла, вызывающая file_read_json или read_txt_file в зависимости от типа файла
+//Функция чтения файла, вызывающая, проверяющая успешность открытия файла и возвращающая вектор структур данных из лог-файла
 QVector<date_time_type_msg> ReadData::file_read(){
     QVector<date_time_type_msg> data_vector;
-    if(file_open()){
-            if(file_type == "json"){
-            }
-            else if(file_type == "txt"){
-                data_vector = read_txt_file();
-            }
-        }
-        return data_vector;
+    if(file_open())
+        data_vector = read_txt_file();
+    return data_vector;
 }

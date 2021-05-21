@@ -13,7 +13,7 @@ public:
     QVector<date_time_type_msg> file_read();
 
 private:
-    QString filename, file_type;
+    QString filename;
 
     bool file_open();
     QVector<date_time_type_msg> read_txt_file();

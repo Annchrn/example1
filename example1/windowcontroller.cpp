@@ -26,22 +26,27 @@ void WindowController::InitializeConnections(){  // соединяем сигн�
 }
 void WindowController::OpenFileChicked_handler(const QString& filename){
 
-  /*  ReadData data_read(filename);
-    QVector<date_time_type_msg> data_vector = data_read.file_read();
-    ProcessData counters(data_vector);
-
-    Data_Model data_model;//инициализируем модель данных
-
-    // заполняем модель для графика
-    data_model.chart_map = counters.get_chart_map();
-    */
-
-   // emit SendDataModelToForm(data_model);
-
     qDebug() << "нажата кнопка <Открыть файл>";
+    ReadData data_read(filename);
+    QVector<date_time_type_msg> data_vector = data_read.file_read();
+    if(!data_vector.empty()){
+        ProcessData counters(data_vector);
+        Data_Model data_model;//инициализируем модель данных
+        // заполняем модель для графика
+        data_model.time_range = counters.get_time_range();
+        data_model.chart_map = counters.get_chart_map();
+        data_model.table_map = counters.get_table_map();
+        data_model.data_vector = data_vector;
+        data_model.filters_struct = counters.get_filters_struct();
+
+        emit SendDataModelToForm(data_model); // отправляем модель данных в mainwindow
+    } else{
+        // сигнал о том, что нужно очистить таблицу и графики и фильтры
+    }
 }
 
 void WindowController::CleanFiltersClicked_handler(){
+    //тут должны быть нажаты все фильтры, а следовательно, возвращено состояние, как только был открыт файл
     qDebug() << "нажата кнопка <Очистить>";
 }
 

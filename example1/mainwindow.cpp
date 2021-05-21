@@ -88,18 +88,16 @@ void MainWindow::create_table(){
 }
 
 // Инициализаиция QTreeWidget
-//
 void MainWindow::create_tree()
 {
-    QTreeWidget *treeWidget = new QTreeWidget(this);
+    treeWidget = new QTreeWidget(this);
     treeWidget->setMinimumHeight(500);
     treeWidget->setMaximumWidth(180);
     ui->gridLayout->addWidget(treeWidget, 4, 0, -1, 1);
-    //treeWidget->header()->hide();
 
     treeWidget->setHeaderLabel("Фильтры");
     treeWidget->headerItem()->setIcon(0, QIcon(":/filter_icon.png"));
-  //  treeWidget->set
+
     // добавление элементов
     QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
     itm->setText(0, "Уровень сообщения");
@@ -112,11 +110,6 @@ void MainWindow::create_tree()
     QTreeWidgetItem *itm2 = new QTreeWidgetItem(treeWidget);
     itm2->setText(0, "Уровень доступа");
     itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-/*
-    // сократить -> fill_filters(const QStrinList& types_list);
-    QTreeWidgetItem *itm_child_INF = new QTreeWidgetItem(itm);
-    itm_child_INF->setText(0, "INF");
-    itm_child_INF->setCheckState(0, Qt::Checked);*/
 }
 
 // Функция очистки графика
@@ -149,17 +142,33 @@ void MainWindow::clear_chart_and_table(){
 // Функция заполнения и построения графика, где даты имеют тип QDateTime
 // Принимает массив с данными для графика и промежуток времени в днях
 void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range)
-{
-    if(!types_map.empty()){        // если массив вершин графика непустой - строим график
-        clear_chart(); // очищаем старое содержимое графика
+{        clear_chart(); // очищаем старое содержимое графика
 
-        //заполнение значений графика
-        QVector<QBarSet> set_vector;
-        QBarSet *setINF = new QBarSet("INF");
+        //инициализируем массив для QBarSet, где создаём указатели на BarSet для каждого типа сообщения в лог-файле
+        QMap<QString, QBarSet*> set_map;
+        QMap<QString, int> temp_map = types_map.value(types_map.firstKey());
+        for(const auto& key : temp_map.keys()){
+            QBarSet *set = new QBarSet(key);
+            set_map[key] = (set);
+        }
+        // заполняем вектор с датами для оси x и данные для гистограммы
+        QVector<QDateTime> values;
+        for(const auto& date_time : types_map.keys()){ // проходим модели данных для графика
+            values.append(date_time); // записываем дату-время для оси х
+            for(const auto& type : types_map.value(date_time).keys()){ // проходим по массиву с типами и их количеством для каждого промежутка времени
+                    *set_map[type] << types_map.value(date_time).value(type);
+            }
+        }
+        //  добавляем "кусочки" гистограммы на график
+        QStackedBarSeries* series = new QStackedBarSeries(this);
+        for(const auto& type : set_map.keys()){
+            series->append(set_map.value(type));
+        }
+
+        /*QBarSet *setINF = new QBarSet("INF");
         QBarSet *setDBG = new QBarSet("DBG");
         QBarSet *setFTL = new QBarSet("FTL");
 
-        QVector<QDateTime> values;
         for(auto& key : types_map.keys()){
             values.append(key);
             for(auto types_key : types_map.value(key).keys()){
@@ -172,15 +181,31 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             }
         }
 
-        setINF->setColor(QColor(153, 204, 255));
+        // посчитать количество логов и сделать число, по которому будет меняться цвет
+        // если логов 10, то r-15 g -20 b-20
+        // это число = 150 / количество логов
+        int R=150, G=200, B=255;
+       *  int k = int(150 / set_vector.size());
+        for(auto& set : set_vector){
+            set.setColor(QColor(R, G, B));
+            if(R>=0)
+                R-=15;
+            if(G>=0)
+                G+=;
+            if(B>=0)
+                B+=30;
+        }
+        // либо не устанавливать цвета вообще, чтобы были автоматические
+
+
+        setINF->setColor(QColor(150, 200, 255));
         setDBG->setColor(QColor(91,146,208));
         setFTL->setColor(QColor(0,76,153));
 
-        QStackedBarSeries* series = new QStackedBarSeries(this);
         series->append(setINF);
         series->append(setDBG);
         series->append(setFTL);
-
+*/
         QChart *chart = chartView->chart();
         chart->addSeries(series);
 
@@ -197,22 +222,17 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
         chart->addAxis(axisY, Qt::AlignLeft);
         series->attachAxis(axisY);
 
-        chart->legend()->setVisible(true);
-
         // отображаем график
+        chart->legend()->setVisible(true);
         if(chartView->isHidden())
             chartView->setHidden(false);
         ui->gridLayoutWidget->adjustSize();
         adjustSize();
-
-    } else{    // если массив вершин графика пустой, то очищаем старый график и таблицу
-        clear_chart_and_table();
-    }
 }
 
 //Функция заполнения оси Х значениями типа QDateTime. Также устанавливает заголовок оси и угол наклона надписей
 // принимает указатель на ось, ссылку на вектор значений и промежуток времени в днях
-void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, int range){
+void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, const int& range){
     QStringList categories;
     if(range <= 259200){
         axisX->setTitleText("Отрезки времени по 8 часов");
@@ -245,19 +265,8 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>&
     // менять размер шрифта, если нужно axisX->setLabelsFont(QFont("Times", 8));
 }
 
-
-// Функция построения графика
-// принимает объект типа ProcessData, предназначенный для обработки вектора структур с записями из лог-файла
-void MainWindow::build_chart(ProcessData& counters){
-    int range = 0;
-    if(!data_vector.empty())
-        range = data_vector[0].date_time.secsTo(data_vector.last().date_time); // количество дней в лог-файле
-    fill_chart(counters.get_chart_map(), range); // заполняем график значениями
-
-}
-
 // Функция заполнения таблицы
-void MainWindow::build_table(){
+void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
     if(!data_vector.isEmpty()){     // если вектор структур непустой, заполняем таблицу
         tableWidget->clearContents(); //удаляем старое содержимое из таблицы
 
@@ -284,6 +293,49 @@ void MainWindow::build_table(){
     }
 }
 
+void MainWindow::fill_filters(const Filters_structure& filters_struct){
+    int type_item_index = treeWidget->itemAt(0,1)->childCount();
+    while(type_item_index != -1){
+        treeWidget->itemAt(0,1)->removeChild(treeWidget->itemAt(0,1)->takeChild(type_item_index));
+        type_item_index--;
+    }
+    for(const auto& type : filters_struct.types_map.keys()){
+        QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget->itemAt(0,1));
+        type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
+        type_item->setCheckState(0, Qt::Checked);
+    }
+    treeWidget->itemAt(0,1)->setExpanded(true);
+}
+
+/*
+ *
+// Функция заполнения таблицы
+void MainWindow::build_table(QMap<QDateTime, QString> table_map){    // если вектор структур непустой, заполняем таблицу
+        tableWidget->clearContents(); //удаляем старое содержимое из таблицы
+
+        // добавляем в таблицу данные из вектора структур
+        tableWidget->setRowCount(table_map.size());
+        for(int i = 0; i < table_map.size(); i++){
+            // 1-й столбец - "Дата"
+            QTableWidgetItem* item0 = new QTableWidgetItem();
+            item0->setTextAlignment(84);
+            item0->setText(table_map[i].key().toString("ddd dd.MM.yyyy hh:mm:ss"));
+            tableWidget->setItem(i, 0, item0);
+            // 2-й столбец - "Сообщение"
+            QTableWidgetItem* item1 = new QTableWidgetItem();
+            item1->setTextAlignment(84);
+            item1->setText(data_vector[i].message);
+            tableWidget->setItem(i, 1, item1);
+
+            if(data_vector[i].type == "FATAL"){
+                tableWidget->item(i, 0)->setForeground(Qt::red);
+                tableWidget->item(i, 1)->setForeground(Qt::red);
+            }
+            tableWidget->setHidden(false); // отображаем таблицу
+        }
+}
+*/
+
 void MainWindow::update_Window(const QVector<date_time_type_msg>& data_vector)
 {
     // принимает данные и каждый раз перестраивает таблицу и график по новому вектору данных
@@ -296,31 +348,27 @@ void MainWindow::on_pushButton_clicked()
     ui->label->setText("Файл " + label_file_name);
 
     emit OpenFileClicked(filename);
+}
 
-    // в контроллер, контроллер потом передаёт данные  в слот сюда
-    ReadData data_read(filename);
-    data_vector = data_read.file_read();
-    ProcessData counters(data_vector);
+void MainWindow::GetDataAndFillWindow(Data_Model &data_model){
 
-    build_chart(counters);
-    build_table();
+    ui->label_3->setText("Всего записей: " + QString::number(data_model.table_map.size()));
+    //ui->label_3->setText("Всего записей: " + QString::number(data_model.dat_vector.size()));
+    fill_chart(data_model.chart_map, data_model.time_range);
+    fill_table(data_model.data_vector);
+    fill_filters(data_model.filters_struct);
+    /* filters_struct будет содержать qmap с типом и соотв. количеством лог-сообщений данного типа */
 
+    /*
     // отображение данных о лог-файле
-    //ui->label_3->setText("Всего записей: " + QString::number(data_vector.size()));
+    ui->label_3->setText("Всего записей: " + QString::number(data_model.table_map.size()));
     if(!data_vector.empty()){
         QDateTime start = data_vector[0].date_time;
         QDateTime finish = data_vector.last().date_time;
         ui->dateTimeEdit->setDateTime(start);
         ui->dateTimeEdit_2->setDateTime(finish);
     }
-}
-
-void MainWindow::GetDataAndFillWindow(Data_Model &data_model){
-    // первую и последнюю дату можно взять, например, из какого-то map
-    //build_chart(data_model.chart_map);
-    //build_table(data_model.table_map);
-    //fill_filters(data_model.filters_struct);
-    /* filters_struct будет содержать qmap с типом и соотв. количеством лог-сообщений данного типа */
+*/
 }
 
 void MainWindow::on_pushButton_clean_clicked() // кнопка "Очистить"

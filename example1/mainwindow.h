@@ -40,19 +40,19 @@ private:
 
     QChartView *chartView;
     QTableWidget* tableWidget;
+    QTreeWidget *treeWidget;
 
     void update_Window(const QVector<date_time_type_msg>& data_vector);
-
+    // инициализация таблицы, графика и дерева
     void create_chart();
     void create_table();
     void create_tree();
 
-    void build_table();
-
-    void build_chart(ProcessData& counters);
+    // функции для работы с таблицей, графиком и деревом
+    void fill_table(const QVector<date_time_type_msg>& data_vector);
+    void fill_filters(const Filters_structure& filters_struct);
     void fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range);
-    void create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, int range);
-
+    void create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, const int& range);
     void clear_chart();
     void clear_chart_and_table();
 

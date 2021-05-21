@@ -15,11 +15,13 @@ public:
     Filters_structure get_filters_struct();
     QMap<QDateTime, QMap<QString, int>> get_chart_map();
     QMap<QDateTime, QString> get_table_map();
+    int get_time_range();
 
 private:
     Filters_structure filters_struct;
     QMap<QDateTime, QMap<QString, int>> chart_map;
     QMap<QDateTime, QString> table_map;
+    int time_range;
 
     Filters_structure make_filters_structure(const QVector<date_time_type_msg>& data_vector);
 

@@ -10,20 +10,19 @@ ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
         // заполняем данные для фильтров
         filters_struct.types_map[structure.type]++;
     }
-
     // строим модель для графика
-    int range = 0;
-    if(!data_vector.empty())
-        range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
-    if(range <= 3){
+    int days_range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
+    if(days_range <= 3){
         chart_map = make_hours_number_map(data_vector);
     } else {
-        if(range > 3 && range < 31){
+        if(days_range > 3 && days_range < 31){
             chart_map = make_date_number_map(data_vector);
         } else {
             chart_map = make_week_number_map(data_vector);
         }
      }
+    // диапазон времени между первой и последней записью в секундах
+    time_range = data_vector[0].date_time.secsTo(data_vector.last().date_time);
 }
 
 //Функции доступа
@@ -39,7 +38,11 @@ QMap<QDateTime, QString> ProcessData::get_table_map(){
     return table_map;
 }
 
-// Функция добавления
+int ProcessData::get_time_range(){
+    return time_range;
+}
+
+// Функция заполнения соответствий между типами и количеством сообщений каждого типа
 void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
 {
     if(!types_map.contains(current_date_time)){
@@ -49,6 +52,8 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
     types_map[current_date_time][type] ++;
 }
 
+//Функция, возвращающая соответствие между датой (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
+// принимает вектор структур data_vector
  QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector){
     QMap<QDateTime, QMap<QString, int>> values_map;
 
@@ -61,7 +66,7 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
     return values_map;
 }
 
- //Функция, возвращающая структуру, содержащую соответствие между НЕДЕЛЕЙ и количеством логов + количество сообщений каждого типа за каждую неделю
+ //Функция, возвращающая соответствие между НЕДЕЛЯМИ (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
 QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector){
     QMap<QDateTime, QMap<QString, int>> types_map;
@@ -99,7 +104,7 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVec
     return types_map;
 }
 
-//Функция, возвращающая соответствие между 8-ю часами и количеством логов
+//Функция, возвращающая соответствие между промежутками по 8 часов (начиная с первой записи в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
 QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector){
     QMap<QDateTime, QMap<QString, int>> types_map;
