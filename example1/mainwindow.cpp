@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Добавление метки "Применённые фильтры"
     QLabel *label = new QLabel(this);
     ui->gridLayout->addWidget(label, 3, 0);
-    label->setText("Применённые фильтры:");
+    label->setText("Применённые:");
 
     // фильтры
     create_tree();
@@ -41,9 +41,9 @@ MainWindow::MainWindow(QWidget *parent)
     create_table();
 
     // сигналы
-
     connect(clean_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_clean_clicked()));
-
+    connect(ui->dateTimeEdit, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
+    connect(ui->dateTimeEdit_2, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
 
 }
 
@@ -73,7 +73,9 @@ void MainWindow::create_table(){
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // столбцы
-    tableWidget->setColumnCount(2);
+    tableWidget->setColumnCount(3);
+    tableWidget->setColumnHidden(2, true);
+
     QStringList name_table;
     name_table << "Дата" << "Сообщение";
     tableWidget->setHorizontalHeaderLabels(name_table);
@@ -92,14 +94,16 @@ void MainWindow::create_tree()
 {
     treeWidget = new QTreeWidget(this);
     treeWidget->setMinimumHeight(500);
-    treeWidget->setMaximumWidth(180);
+    //treeWidget->setMaximumWidth(180);
     ui->gridLayout->addWidget(treeWidget, 4, 0, -1, 1);
+  //  treeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    //treeWidget->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     treeWidget->setHeaderLabel("Фильтры");
     treeWidget->headerItem()->setIcon(0, QIcon(":/filter_icon.png"));
 
     // добавление элементов
-    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
+/*    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
     itm->setText(0, "Уровень сообщения");
     itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
 
@@ -110,6 +114,20 @@ void MainWindow::create_tree()
     QTreeWidgetItem *itm2 = new QTreeWidgetItem(treeWidget);
     itm2->setText(0, "Уровень доступа");
     itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+*/
+}
+//================================== работа с таблицей, графиками и фильтрами ==================================================================================================================
+// Функция очистки содержимого окна
+void MainWindow::clear_window_contents(){
+    QLayoutItem *child;
+    if((child = ui->gridLayout->takeAt(4)) != nullptr){
+        clear_chart();
+        tableWidget->clearContents();
+        tableWidget->setRowCount(0);
+        treeWidget->clear();
+    }
+    ui->label_3->setText("Всего записей: ");
+    delete child;
 }
 
 // Функция очистки графика
@@ -128,24 +146,12 @@ void MainWindow::clear_chart()
     }
 }
 
-// Функция очистки графика и таблицы
-void MainWindow::clear_chart_and_table(){
-    QLayoutItem *child;
-    if((child = ui->gridLayout->takeAt(4)) != nullptr){
-        clear_chart();
-        tableWidget->clearContents();
-        tableWidget->setRowCount(0);
-    }
-    delete child;
-}
-
 // Функция заполнения и построения графика, где даты имеют тип QDateTime
 // Принимает массив с данными для графика и промежуток времени в днях
 void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range)
 {        clear_chart(); // очищаем старое содержимое графика
-
+         set_map.clear();
         //инициализируем массив для QBarSet, где создаём указатели на BarSet для каждого типа сообщения в лог-файле
-        QMap<QString, QBarSet*> set_map;
         QMap<QString, int> temp_map = types_map.value(types_map.firstKey());
         for(const auto& key : temp_map.keys()){
             QBarSet *set = new QBarSet(key);
@@ -165,10 +171,7 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             series->append(set_map.value(type));
         }
 
-        /*QBarSet *setINF = new QBarSet("INF");
-        QBarSet *setDBG = new QBarSet("DBG");
-        QBarSet *setFTL = new QBarSet("FTL");
-
+        /*
         for(auto& key : types_map.keys()){
             values.append(key);
             for(auto types_key : types_map.value(key).keys()){
@@ -197,14 +200,9 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
         }
         // либо не устанавливать цвета вообще, чтобы были автоматические
 
-
         setINF->setColor(QColor(150, 200, 255));
         setDBG->setColor(QColor(91,146,208));
         setFTL->setColor(QColor(0,76,153));
-
-        series->append(setINF);
-        series->append(setDBG);
-        series->append(setFTL);
 */
         QChart *chart = chartView->chart();
         chart->addSeries(series);
@@ -267,7 +265,6 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>&
 
 // Функция заполнения таблицы
 void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
-    if(!data_vector.isEmpty()){     // если вектор структур непустой, заполняем таблицу
         tableWidget->clearContents(); //удаляем старое содержимое из таблицы
 
         // добавляем в таблицу данные из вектора структур
@@ -284,17 +281,22 @@ void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
             item1->setText(data_vector[i].message);
             tableWidget->setItem(i, 1, item1);
 
-            if(data_vector[i].type == "FTL"){
+            QTableWidgetItem* item3 = new QTableWidgetItem();
+            item3->setText(data_vector[i].type);
+            tableWidget->setItem(i, 2, item3);
+
+            if(data_vector[i].type == "FTL" || data_vector[i].type == "FATAL"){
                 tableWidget->item(i, 0)->setForeground(Qt::red);
                 tableWidget->item(i, 1)->setForeground(Qt::red);
             }
             tableWidget->setHidden(false); // отображаем таблицу
         }
     }
-}
 
+// Функция заполнения панели фильтров
 void MainWindow::fill_filters(const Filters_structure& filters_struct){
-    int type_item_index = treeWidget->itemAt(0,1)->childCount();
+    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeFilters()));
+   /* int type_item_index = treeWidget->itemAt(0,1)->childCount();
     while(type_item_index != -1){
         treeWidget->itemAt(0,1)->removeChild(treeWidget->itemAt(0,1)->takeChild(type_item_index));
         type_item_index--;
@@ -302,46 +304,58 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
     for(const auto& type : filters_struct.types_map.keys()){
         QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget->itemAt(0,1));
         type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
-        type_item->setCheckState(0, Qt::Checked);
+        type_item->setCheckState(0, Qt::Unchecked);
     }
     treeWidget->itemAt(0,1)->setExpanded(true);
+*/
+    treeWidget->clear();
+    for(const auto& type : filters_struct.types_map.keys()){
+        QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget);
+        type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
+        type_item->setCheckState(0, Qt::Unchecked);
+    }
+    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*, int)), this, SLOT(ChangeFilters()));
+}
+// ==================== функции для фильтрации ====================
+
+void MainWindow::ChangeFilters(){  // при изменении фильтров
+    QStringList types_filters_list;
+    for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
+        if(treeWidget->topLevelItem(i)->checkState(0)){
+            types_filters_list.append(treeWidget->topLevelItem(i)->text(0).split(" ")[0]);
+        }
+    }
+    FilterTable(types_filters_list);
+    //FilterChart(types_filters_list);
 }
 
-/*
- *
-// Функция заполнения таблицы
-void MainWindow::build_table(QMap<QDateTime, QString> table_map){    // если вектор структур непустой, заполняем таблицу
-        tableWidget->clearContents(); //удаляем старое содержимое из таблицы
-
-        // добавляем в таблицу данные из вектора структур
-        tableWidget->setRowCount(table_map.size());
-        for(int i = 0; i < table_map.size(); i++){
-            // 1-й столбец - "Дата"
-            QTableWidgetItem* item0 = new QTableWidgetItem();
-            item0->setTextAlignment(84);
-            item0->setText(table_map[i].key().toString("ddd dd.MM.yyyy hh:mm:ss"));
-            tableWidget->setItem(i, 0, item0);
-            // 2-й столбец - "Сообщение"
-            QTableWidgetItem* item1 = new QTableWidgetItem();
-            item1->setTextAlignment(84);
-            item1->setText(data_vector[i].message);
-            tableWidget->setItem(i, 1, item1);
-
-            if(data_vector[i].type == "FATAL"){
-                tableWidget->item(i, 0)->setForeground(Qt::red);
-                tableWidget->item(i, 1)->setForeground(Qt::red);
+void MainWindow::FilterTable(const QStringList& types_filters_list){
+    // фильтруем содержимое таблицы в соответствии с types_filters_list()
+    for(int i = 0; i < tableWidget->rowCount(); i++){
+        if(types_filters_list.contains(tableWidget->item(i, 2)->text())){
+            if (tableWidget->isRowHidden(i)){
+                tableWidget->setRowHidden(i, false);
             }
-            tableWidget->setHidden(false); // отображаем таблицу
+        } else{
+            tableWidget->setRowHidden(i, true);
         }
+    }
+}
+/*
+// приходится хранить set_map и ещё series ,чтобы добавлять или удалять
+void MainWindow::FilterChart(const QStringList& types_filters_list){
+    for(auto type : set_map.keys()){
+        if(types_filters_list.contains(type)){
+            if(chartView->chart().));
+        } else
+    }
 }
 */
+//================================================private slots:============================================================================================================
 
-void MainWindow::update_Window(const QVector<date_time_type_msg>& data_vector)
-{
-    // принимает данные и каждый раз перестраивает таблицу и график по новому вектору данных
-}
+// =============== посылают сигналы в контроллер ====================
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_pushButton_clicked()  // нажата кнопка "Открыть файл"
 {
     QString filename = QFileDialog::getOpenFileName(this, "Выберите файл", "", "Документ (разделитель - ;) (*.txt);; JSON (*.json)");
     QString label_file_name = filename.split("/").takeLast();
@@ -350,44 +364,33 @@ void MainWindow::on_pushButton_clicked()
     emit OpenFileClicked(filename);
 }
 
-void MainWindow::GetDataAndFillWindow(Data_Model &data_model){
-
-    ui->label_3->setText("Всего записей: " + QString::number(data_model.table_map.size()));
-    //ui->label_3->setText("Всего записей: " + QString::number(data_model.dat_vector.size()));
-    fill_chart(data_model.chart_map, data_model.time_range);
-    fill_table(data_model.data_vector);
-    fill_filters(data_model.filters_struct);
-    /* filters_struct будет содержать qmap с типом и соотв. количеством лог-сообщений данного типа */
-
-    /*
-    // отображение данных о лог-файле
-    ui->label_3->setText("Всего записей: " + QString::number(data_model.table_map.size()));
-    if(!data_vector.empty()){
-        QDateTime start = data_vector[0].date_time;
-        QDateTime finish = data_vector.last().date_time;
-        ui->dateTimeEdit->setDateTime(start);
-        ui->dateTimeEdit_2->setDateTime(finish);
-    }
-*/
-}
-
 void MainWindow::on_pushButton_clean_clicked() // кнопка "Очистить"
 {
     emit CleanFiltersClicked();
 }
+
 void MainWindow::on_pushButton_2_clicked() // кнопка "Сбросить"
 {
-    if(!data_vector.empty()){
-        ui->dateTimeEdit->setDateTime(data_vector[0].date_time);
-        ui->dateTimeEdit_2->setDateTime(data_vector.last().date_time);
-    }
-    // передать сигнал в контроллер
     emit RestoreDataRange();
-    //
-    // в контроллере взять первую и последнюю дату и сделать новый вектор с данными,
-    // передать его обратно, т.е. вызвать сигнал для перерисовки окна , который написан в mainwindow
-    // update_Window (data)
 }
 
+void MainWindow::ChangeDateTimeRange(){  // при изменении диапазона дат
 
+}
 
+// =============== вызываются в контроллере ====================
+void MainWindow::GetDataAndFillWindow(Data_Model &data_model){  // заполнение окна после нажатия кнопки "Открыть"
+    fill_chart(data_model.chart_map, data_model.time_range);
+    fill_table(data_model.data_vector);
+    fill_filters(data_model.filters_struct);
+
+    // отображение данных о лог-файле
+    ui->label_3->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
+    ui->dateTimeEdit->setDateTime(data_model.data_vector[0].date_time);
+    ui->dateTimeEdit_2->setDateTime(data_model.data_vector.last().date_time);
+}
+
+void MainWindow::RestoreDateTimeRange(QDateTime& start, QDateTime& finish){
+    ui->dateTimeEdit->setDateTime(start);
+    ui->dateTimeEdit_2->setDateTime(finish);
+}

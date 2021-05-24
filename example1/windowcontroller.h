@@ -16,13 +16,18 @@ private slots:
     void OpenFileChicked_handler(const QString& filename);
     void CleanFiltersClicked_handler();
     void RestoreDataRange_handler();
+    void ApplyTypeFilters_handler(const QStringList& types_filters_list);
 
 signals:
     // контроллер отправляет сигналы о том, что нужно обоработать модель данных
     void SendDataModelToForm(Data_Model &data_model);
+    void SendInitialDateTimeRangeToForm(QDateTime&, QDateTime&);
+    void CleanWindowContents();
 
 private:
     MainWindow *window;
+    Data_Model data_model;
+
     void InitializeConnections();
 
 };

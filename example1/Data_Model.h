@@ -16,7 +16,6 @@ struct Data_Model{
     int time_range;
     QMap<QDateTime, QMap<QString, int>> chart_map;
     Filters_structure filters_struct;
-    QMap<QDateTime, QString> table_map;
     QVector<date_time_type_msg> data_vector;
 };
 

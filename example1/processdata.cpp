@@ -3,10 +3,8 @@
 
 ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
 {
-    // строим модель для таблицы и блока фильтров
+    // строим модель для блока фильтров
     for(const auto& structure : data_vector){
-        //заполняем данные для таблицы
-        table_map[structure.date_time] = structure.message;
         // заполняем данные для фильтров
         filters_struct.types_map[structure.type]++;
     }
@@ -32,10 +30,6 @@ Filters_structure ProcessData::get_filters_struct(){
 
 QMap<QDateTime, QMap<QString, int>> ProcessData::get_chart_map(){
     return chart_map;
-}
-
-QMap<QDateTime, QString> ProcessData::get_table_map(){
-    return table_map;
 }
 
 int ProcessData::get_time_range(){

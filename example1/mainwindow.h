@@ -22,16 +22,21 @@ public:
 public slots:
 
 private slots:
-    void on_pushButton_clicked();
-    void on_pushButton_clean_clicked();
+    void on_pushButton_clicked(); // кнопка "Открыть файл"
+    void on_pushButton_clean_clicked(); // кнопка "Очистить"
+    void on_pushButton_2_clicked(); // кнопка "Сбросить"
 
-    void on_pushButton_2_clicked();
     void GetDataAndFillWindow(Data_Model &data_model);
+    void RestoreDateTimeRange(QDateTime& start, QDateTime& finish);
+    void ChangeDateTimeRange();
+    void ChangeFilters();
+    void clear_window_contents();
 
 signals:
     void OpenFileClicked(const QString& filename);
     void CleanFiltersClicked();
     void RestoreDataRange();
+    void ApplyTypeFilters(const QStringList& types_list);
 
 private:
     Ui::MainWindow *ui;
@@ -42,7 +47,8 @@ private:
     QTableWidget* tableWidget;
     QTreeWidget *treeWidget;
 
-    void update_Window(const QVector<date_time_type_msg>& data_vector);
+    QMap<QString, QBarSet*> set_map;
+
     // инициализация таблицы, графика и дерева
     void create_chart();
     void create_table();
@@ -54,7 +60,8 @@ private:
     void fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range);
     void create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, const int& range);
     void clear_chart();
-    void clear_chart_and_table();
+    void FilterTable(const QStringList& types_filters_list);
+    void FilterChart(const QStringList& types_filters_list);
 
     QVector<date_time_type_msg> data_vector; // вектор структур, содержащий все лог-записи из файла
 
