@@ -29,7 +29,7 @@ private slots:
     void GetDataAndFillWindow(Data_Model &data_model);
     void RestoreDateTimeRange(QDateTime& start, QDateTime& finish);
     void ChangeDateTimeRange();
-    void ChangeFilters();
+    void ChangeFilters(QTreeWidgetItem*, int);
     void clear_window_contents();
 
 signals:
@@ -47,8 +47,10 @@ private:
     QTableWidget* tableWidget;
     QTreeWidget *treeWidget;
 
+    //============
     QMap<QString, QBarSet*> set_map;
-
+    QStackedBarSeries* series;
+    //===================
     // инициализация таблицы, графика и дерева
     void create_chart();
     void create_table();

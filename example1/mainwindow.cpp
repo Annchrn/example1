@@ -94,7 +94,7 @@ void MainWindow::create_tree()
 {
     treeWidget = new QTreeWidget(this);
     treeWidget->setMinimumHeight(500);
-    //treeWidget->setMaximumWidth(180);
+    treeWidget->setMaximumWidth(180);
     ui->gridLayout->addWidget(treeWidget, 4, 0, -1, 1);
   //  treeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     //treeWidget->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
@@ -103,7 +103,7 @@ void MainWindow::create_tree()
     treeWidget->headerItem()->setIcon(0, QIcon(":/filter_icon.png"));
 
     // добавление элементов
-/*    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
+ /*   QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
     itm->setText(0, "Уровень сообщения");
     itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
 
@@ -166,7 +166,7 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             }
         }
         //  добавляем "кусочки" гистограммы на график
-        QStackedBarSeries* series = new QStackedBarSeries(this);
+        series = new QStackedBarSeries(this);
         for(const auto& type : set_map.keys()){
             series->append(set_map.value(type));
         }
@@ -295,8 +295,8 @@ void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
 
 // Функция заполнения панели фильтров
 void MainWindow::fill_filters(const Filters_structure& filters_struct){
-    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeFilters()));
-   /* int type_item_index = treeWidget->itemAt(0,1)->childCount();
+    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeFilters(QTreeWidgetItem*, int)));
+    /*int type_item_index = treeWidget->itemAt(0,1)->childCount();
     while(type_item_index != -1){
         treeWidget->itemAt(0,1)->removeChild(treeWidget->itemAt(0,1)->takeChild(type_item_index));
         type_item_index--;
@@ -304,7 +304,7 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
     for(const auto& type : filters_struct.types_map.keys()){
         QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget->itemAt(0,1));
         type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
-        type_item->setCheckState(0, Qt::Unchecked);
+        type_item->setCheckState(0, Qt::Checked);
     }
     treeWidget->itemAt(0,1)->setExpanded(true);
 */
@@ -312,13 +312,14 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
     for(const auto& type : filters_struct.types_map.keys()){
         QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget);
         type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
-        type_item->setCheckState(0, Qt::Unchecked);
+        type_item->setCheckState(0, Qt::Checked);
     }
-    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*, int)), this, SLOT(ChangeFilters()));
+    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*, int)), this, SLOT(ChangeFilters(QTreeWidgetItem*, int)));
 }
+
 // ==================== функции для фильтрации ====================
 
-void MainWindow::ChangeFilters(){  // при изменении фильтров
+void MainWindow::ChangeFilters(QTreeWidgetItem*, int){  // при изменении фильтров
     QStringList types_filters_list;
     for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
         if(treeWidget->topLevelItem(i)->checkState(0)){
@@ -326,7 +327,7 @@ void MainWindow::ChangeFilters(){  // при изменении фильтров
         }
     }
     FilterTable(types_filters_list);
-    //FilterChart(types_filters_list);
+ //   FilterChart(types_filters_list);
 }
 
 void MainWindow::FilterTable(const QStringList& types_filters_list){
@@ -341,16 +342,29 @@ void MainWindow::FilterTable(const QStringList& types_filters_list){
         }
     }
 }
-/*
+
+//**********************************************************************************************************************************************************************************************************************
+//**********************************************************************************************************************************************************************************************************************
+//**********************************************************************************************************************************************************************************************************************
+
+
 // приходится хранить set_map и ещё series ,чтобы добавлять или удалять
 void MainWindow::FilterChart(const QStringList& types_filters_list){
     for(auto type : set_map.keys()){
         if(types_filters_list.contains(type)){
-            if(chartView->chart().));
-        } else
-    }
+            //if (!series->barSets().contains(set_map.value(type))){
+               // chartView->chart()->removeSeries(series);
+                //series->insert(0, set_map.value(type));
+               // series->barSets().append(set_map.value(type));
+            series->append(set_map.value(type));
+                //chartView->chart()->addSeries(series);
+             // }
+        } else{
+                    series->remove(set_map.value(type));
+          }
+        }
 }
-*/
+
 //================================================private slots:============================================================================================================
 
 // =============== посылают сигналы в контроллер ====================
