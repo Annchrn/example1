@@ -43,8 +43,9 @@ MainWindow::MainWindow(QWidget *parent)
     // сигналы
     connect(clean_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_clean_clicked()));
     connect(ui->dateTimeEdit, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
-    connect(ui->dateTimeEdit_2, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
-
+  //  ui->dateTimeEdit->keyboardTracking()
+//    connect(ui->dateTimeEdit, SIGNAL(dateTimeChanged(const QDateTime &)), this, SLOT(ChangeDateTimeRange(const QDateTime &)));
+ //   connect(ui->dateTimeEdit_2, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
 }
 
 MainWindow::~MainWindow()
@@ -75,6 +76,7 @@ void MainWindow::create_table(){
     // столбцы
     tableWidget->setColumnCount(3);
     tableWidget->setColumnHidden(2, true);
+    tableWidget->verticalHeader()->setVisible(false);
 
     QStringList name_table;
     name_table << "Дата" << "Сообщение";
@@ -96,17 +98,18 @@ void MainWindow::create_tree()
     treeWidget->setMinimumHeight(500);
     treeWidget->setMaximumWidth(180);
     ui->gridLayout->addWidget(treeWidget, 4, 0, -1, 1);
-  //  treeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    //treeWidget->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+   // treeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+   // treeWidget->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     treeWidget->setHeaderLabel("Фильтры");
     treeWidget->headerItem()->setIcon(0, QIcon(":/filter_icon.png"));
-
+   // treeWidget->headerItem()->setBackground(0, )
+   // treeWidget->headerItem()->setBackgroundColor(0, Qt::blue);
     // добавление элементов
- /*   QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
+    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
     itm->setText(0, "Уровень сообщения");
     itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-
+/*
     QTreeWidgetItem *itm1 = new QTreeWidgetItem(treeWidget);
     itm1->setText(0, "Пользователь");
     itm1->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
@@ -116,7 +119,8 @@ void MainWindow::create_tree()
     itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
 */
 }
-//================================== работа с таблицей, графиками и фильтрами ==================================================================================================================
+
+//================================== работа с таблицей, графиками и фильтрами =====================================================================================================================================
 // Функция очистки содержимого окна
 void MainWindow::clear_window_contents(){
     QLayoutItem *child;
@@ -124,11 +128,18 @@ void MainWindow::clear_window_contents(){
         clear_chart();
         tableWidget->clearContents();
         tableWidget->setRowCount(0);
-        treeWidget->clear();
+        // treeWidget->clear();
+        for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
+            for(int k = treeWidget->topLevelItem(i)->childCount(); k >= 0; k--){
+                treeWidget->topLevelItem(i)->removeChild(treeWidget->topLevelItem(i)->child(k));
+            }
+        }
     }
     ui->label_3->setText("Всего записей: ");
     delete child;
 }
+
+// ==================== график ====================
 
 // Функция очистки графика
 // удаляет series и axixX, axisY из графика
@@ -148,9 +159,9 @@ void MainWindow::clear_chart()
 
 // Функция заполнения и построения графика, где даты имеют тип QDateTime
 // Принимает массив с данными для графика и промежуток времени в днях
-void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map, int& range)
+void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map,const int& range)
 {        clear_chart(); // очищаем старое содержимое графика
-         set_map.clear();
+         QMap<QString, QBarSet*> set_map;
         //инициализируем массив для QBarSet, где создаём указатели на BarSet для каждого типа сообщения в лог-файле
         QMap<QString, int> temp_map = types_map.value(types_map.firstKey());
         for(const auto& key : temp_map.keys()){
@@ -166,24 +177,12 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             }
         }
         //  добавляем "кусочки" гистограммы на график
-        series = new QStackedBarSeries(this);
+        QStackedBarSeries* series = new QStackedBarSeries(this);
         for(const auto& type : set_map.keys()){
             series->append(set_map.value(type));
         }
 
         /*
-        for(auto& key : types_map.keys()){
-            values.append(key);
-            for(auto types_key : types_map.value(key).keys()){
-                if(types_key == "INF")
-                    *setINF << types_map.value(key).value(types_key);
-                if(types_key == "DBG")
-                    *setDBG << types_map.value(key).value(types_key);
-                if(types_key == "FTL")
-                    *setFTL << types_map.value(key).value(types_key);
-            }
-        }
-
         // посчитать количество логов и сделать число, по которому будет меняться цвет
         // если логов 10, то r-15 g -20 b-20
         // это число = 150 / количество логов
@@ -198,11 +197,6 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             if(B>=0)
                 B+=30;
         }
-        // либо не устанавливать цвета вообще, чтобы были автоматические
-
-        setINF->setColor(QColor(150, 200, 255));
-        setDBG->setColor(QColor(91,146,208));
-        setFTL->setColor(QColor(0,76,153));
 */
         QChart *chart = chartView->chart();
         chart->addSeries(series);
@@ -230,7 +224,7 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
 
 //Функция заполнения оси Х значениями типа QDateTime. Также устанавливает заголовок оси и угол наклона надписей
 // принимает указатель на ось, ссылку на вектор значений и промежуток времени в днях
-void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values, const int& range){
+void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values,const int& range){
     QStringList categories;
     if(range <= 259200){
         axisX->setTitleText("Отрезки времени по 8 часов");
@@ -262,6 +256,8 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>&
     axisX->append(categories);
     // менять размер шрифта, если нужно axisX->setLabelsFont(QFont("Times", 8));
 }
+
+// ==================== таблица и фильтры ====================
 
 // Функция заполнения таблицы
 void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
@@ -295,8 +291,8 @@ void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
 
 // Функция заполнения панели фильтров
 void MainWindow::fill_filters(const Filters_structure& filters_struct){
-    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeFilters(QTreeWidgetItem*, int)));
-    /*int type_item_index = treeWidget->itemAt(0,1)->childCount();
+    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*, int)));
+    int type_item_index = treeWidget->itemAt(0,1)->childCount();
     while(type_item_index != -1){
         treeWidget->itemAt(0,1)->removeChild(treeWidget->itemAt(0,1)->takeChild(type_item_index));
         type_item_index--;
@@ -307,30 +303,12 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
         type_item->setCheckState(0, Qt::Checked);
     }
     treeWidget->itemAt(0,1)->setExpanded(true);
-*/
-    treeWidget->clear();
-    for(const auto& type : filters_struct.types_map.keys()){
-        QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget);
-        type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
-        type_item->setCheckState(0, Qt::Checked);
-    }
-    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*, int)), this, SLOT(ChangeFilters(QTreeWidgetItem*, int)));
+    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
 }
 
-// ==================== функции для фильтрации ====================
+// ==================== фильтрация таблицы при измененении фильтров ====================
 
-void MainWindow::ChangeFilters(QTreeWidgetItem*, int){  // при изменении фильтров
-    QStringList types_filters_list;
-    for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
-        if(treeWidget->topLevelItem(i)->checkState(0)){
-            types_filters_list.append(treeWidget->topLevelItem(i)->text(0).split(" ")[0]);
-        }
-    }
-    FilterTable(types_filters_list);
- //   FilterChart(types_filters_list);
-}
-
-void MainWindow::FilterTable(const QStringList& types_filters_list){
+void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
     // фильтруем содержимое таблицы в соответствии с types_filters_list()
     for(int i = 0; i < tableWidget->rowCount(); i++){
         if(types_filters_list.contains(tableWidget->item(i, 2)->text())){
@@ -343,33 +321,12 @@ void MainWindow::FilterTable(const QStringList& types_filters_list){
     }
 }
 
-//**********************************************************************************************************************************************************************************************************************
-//**********************************************************************************************************************************************************************************************************************
-//**********************************************************************************************************************************************************************************************************************
+//================================================private slots:====================================================================================================================================================
 
+// =============== посылают сигналы в контроллер ==============================================================
 
-// приходится хранить set_map и ещё series ,чтобы добавлять или удалять
-void MainWindow::FilterChart(const QStringList& types_filters_list){
-    for(auto type : set_map.keys()){
-        if(types_filters_list.contains(type)){
-            //if (!series->barSets().contains(set_map.value(type))){
-               // chartView->chart()->removeSeries(series);
-                //series->insert(0, set_map.value(type));
-               // series->barSets().append(set_map.value(type));
-            series->append(set_map.value(type));
-                //chartView->chart()->addSeries(series);
-             // }
-        } else{
-                    series->remove(set_map.value(type));
-          }
-        }
-}
-
-//================================================private slots:============================================================================================================
-
-// =============== посылают сигналы в контроллер ====================
-
-void MainWindow::on_pushButton_clicked()  // нажата кнопка "Открыть файл"
+// нажата кнопка "Открыть файл"
+void MainWindow::on_pushButton_clicked()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Выберите файл", "", "Документ (разделитель - ;) (*.txt);; JSON (*.json)");
     QString label_file_name = filename.split("/").takeLast();
@@ -378,22 +335,41 @@ void MainWindow::on_pushButton_clicked()  // нажата кнопка "Откр
     emit OpenFileClicked(filename);
 }
 
-void MainWindow::on_pushButton_clean_clicked() // кнопка "Очистить"
+// кнопка "Очистить"
+void MainWindow::on_pushButton_clean_clicked()
 {
     emit CleanFiltersClicked();
 }
 
-void MainWindow::on_pushButton_2_clicked() // кнопка "Сбросить"
+// кнопка "Сбросить"
+void MainWindow::on_pushButton_2_clicked()
 {
     emit RestoreDataRange();
 }
 
-void MainWindow::ChangeDateTimeRange(){  // при изменении диапазона дат
-
+// при изменении фильтров уровня сообщений
+void MainWindow::ChangeTypeFilters(QTreeWidgetItem*, int)
+{
+    QStringList types_filters_list;
+    for(int i = 0; i < treeWidget->topLevelItem(0)->childCount(); i++){
+        if(treeWidget->topLevelItem(0)->child(i)->checkState(0)){
+            types_filters_list.append(treeWidget->topLevelItem(0)->child(i)->text(0).split(" ")[0]);
+        }
+    }
+    TypeFilterTable(types_filters_list);
+    emit TypeFiltersChanged(types_filters_list);
 }
 
-// =============== вызываются в контроллере ====================
-void MainWindow::GetDataAndFillWindow(Data_Model &data_model){  // заполнение окна после нажатия кнопки "Открыть"
+// при изменении диапазона дат
+void MainWindow::ChangeDateTimeRange()
+{
+    qDebug() << "изменение даты";
+}
+
+// =============== вызываются в контроллере ==================================================================
+
+// заполнение окна после нажатия кнопки "Открыть"
+void MainWindow::GetDataAndFillWindow(Data_Model &data_model){
     fill_chart(data_model.chart_map, data_model.time_range);
     fill_table(data_model.data_vector);
     fill_filters(data_model.filters_struct);
@@ -404,7 +380,13 @@ void MainWindow::GetDataAndFillWindow(Data_Model &data_model){  // заполн�
     ui->dateTimeEdit_2->setDateTime(data_model.data_vector.last().date_time);
 }
 
+// для восстановления изначального временного диапазона
 void MainWindow::RestoreDateTimeRange(QDateTime& start, QDateTime& finish){
     ui->dateTimeEdit->setDateTime(start);
     ui->dateTimeEdit_2->setDateTime(finish);
+}
+
+void MainWindow::RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>& chart_map,const int& range,const int& counter){
+    fill_chart(chart_map, range);
+    ui->label_3->setText("Всего записей: " + QString::number(counter));
 }

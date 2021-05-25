@@ -43,11 +43,20 @@
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="2">
       <widget class="QDateTimeEdit" name="dateTimeEdit">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::DefaultContextMenu</enum>
+       </property>
+       <property name="toolTipDuration">
+        <number>-1</number>
        </property>
        <property name="wrapping">
         <bool>false</bool>

@@ -19,13 +19,14 @@ void WindowController::InitializeConnections(){
     connect(window, SIGNAL(OpenFileClicked(const QString&)), this, SLOT(OpenFileChicked_handler(const QString&)));
     connect(window, SIGNAL(CleanFiltersClicked()), this, SLOT(CleanFiltersClicked_handler()));  //кнопка "Очистить"
     connect(window, SIGNAL(RestoreDataRange()), this, SLOT(RestoreDataRange_handler())); // кнопка "Сбросить"
-    connect(window, SIGNAL(ApplyTypeFilters(const QStringList&)), this, SLOT(ApplyTypeFilters_handler(const QStringList&)));
+    connect(window, SIGNAL(TypeFiltersChanged(const QStringList&)), this, SLOT(TypeFiltersChanged_handler(const QStringList&)));
 
     //сингалы от контроллера в mainwindow
-    connect(this, SIGNAL(SendDataModelToForm(Data_Model& )), window, SLOT(GetDataAndFillWindow(Data_Model&)));
+    connect(this, SIGNAL(SendDataModelToForm(Data_Model&)), window, SLOT(GetDataAndFillWindow(Data_Model&)));
     connect(this, SIGNAL(SendInitialDateTimeRangeToForm(QDateTime&, QDateTime&)), window, SLOT(RestoreDateTimeRange(QDateTime&, QDateTime&)));
     connect(this, SIGNAL(CleanWindowContents()), window, SLOT(clear_window_contents()));
-
+    connect(this, SIGNAL (RebuildChart(const QMap<QDateTime, QMap<QString, int>>&,const int&, const int&)), window, SLOT(RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>&,const int&,const int&)));
+    connect(this, SIGNAL(ClearSeries()), window, SLOT(clear_chart()));
 }
 void WindowController::OpenFileChicked_handler(const QString& filename){
     ReadData data_read(filename);
@@ -50,11 +51,21 @@ void WindowController::CleanFiltersClicked_handler(){
     qDebug() << "нажата кнопка <Очистить>";
     // тут сбрасываются только фильтры по типам, но не
 }
-
+// для восстановления диапазона
 void WindowController::RestoreDataRange_handler(){
     emit SendInitialDateTimeRangeToForm(data_model.data_vector[0].date_time, data_model.data_vector.last().date_time);
 }
-
-void WindowController::ApplyTypeFilters_handler(const QStringList& types_filters_list){
-    // объявляем модель данных
+// для перестроения графика
+void WindowController::TypeFiltersChanged_handler(const QStringList& types_filters_list){
+    QVector<date_time_type_msg> current_data_vector;
+    for(const auto& structure : data_model.data_vector){
+        if(types_filters_list.contains(structure.type))
+            current_data_vector.append(structure);
+    }
+    if(!current_data_vector.empty()){
+        ProcessData current_counters(current_data_vector);
+        emit RebuildChart(current_counters.get_chart_map(), current_counters.get_time_range(), current_data_vector.size());
+    } else{
+        emit ClearSeries();
+    }
 }
