@@ -6,6 +6,7 @@
 #include "data_structure.h"
 #include "processdata.h"
 #include "Data_Model.h"
+#include "datetimeedit.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -35,26 +36,34 @@ private slots:
     void RestoreDateTimeRange(QDateTime& start, QDateTime& finish); // сбрасывает временной диапазон
     void clear_window_contents(); // очищает таблицу, фильтры и график, если происходит ошибка чтения данных
     void RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>&,const int&,const int&);
+    void GetDataAndRebuildWindow(Data_Model &data_model);
 
 signals:
     void OpenFileClicked(const QString& filename);
     void CleanFiltersClicked();
     void RestoreDataRange();
     void TypeFiltersChanged(const QStringList&);
+    void DateTimeChanged(QDateTime&, QDateTime&);
 
 private:
     Ui::MainWindow *ui;
 
     QPushButton *clean_filters_button;
+    QPushButton *restore_date_time_range_button;
 
     QChartView *chartView;
     QTableWidget* tableWidget;
     QTreeWidget *treeWidget;
 
+    DateTimeEdit *dateTimeEdit;
+    DateTimeEdit *dateTimeEdit_2;
+    QLabel *messages_counter;
+
     // инициализация таблицы, графика и дерева
     void create_chart();
     void create_table();
     void create_tree();
+    void create_date_time_edit_elements();
 
     // функции для работы с таблицей, графиком и деревом
     void fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map,const int& range);

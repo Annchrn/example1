@@ -17,6 +17,7 @@ private slots:
     void CleanFiltersClicked_handler();
     void RestoreDataRange_handler();
     void TypeFiltersChanged_handler(const QStringList& types_filters_list); // при изменении фильтров "Уровень сообщения"
+    void DateTimeChanged_handler(QDateTime&, QDateTime&);
 
 signals:
     // контроллер отправляет сигналы о том, что нужно обоработать модель данных
@@ -25,6 +26,7 @@ signals:
     void CleanWindowContents();
     void RebuildChart(const QMap<QDateTime, QMap<QString, int>>&,const int&, const int&);
     void ClearSeries();
+    void RebuildWindow(Data_Model& data_model);
 
 private:
     MainWindow *window;

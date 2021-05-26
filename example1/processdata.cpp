@@ -1,7 +1,7 @@
 #include "processdata.h"
 #include <QDebug>
 
-ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
+ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector, QDateTime& begining, QDateTime& ending)
 {
     // строим модель для блока фильтров
     for(const auto& structure : data_vector){
@@ -9,18 +9,18 @@ ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector)
         filters_struct.types_map[structure.type]++;
     }
     // строим модель для графика
-    int days_range = data_vector[0].date_time.date().daysTo(data_vector.last().date_time.date()); // количество дней в лог-файле
+    int days_range = begining.date().daysTo(ending.date()); // количество дней в лог-файле
     if(days_range <= 3){
-        chart_map = make_hours_number_map(data_vector);
+        chart_map = make_hours_number_map(data_vector, begining, ending);
     } else {
         if(days_range > 3 && days_range < 31){
-            chart_map = make_date_number_map(data_vector);
+            chart_map = make_date_number_map(data_vector, begining, ending);
         } else {
-            chart_map = make_week_number_map(data_vector);
+            chart_map = make_week_number_map(data_vector, begining, ending);
         }
      }
     // диапазон времени между первой и последней записью в секундах
-    time_range = data_vector[0].date_time.secsTo(data_vector.last().date_time);
+    time_range = begining.secsTo(ending);
 }
 
 //Функции доступа
@@ -48,7 +48,7 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
 
 //Функция, возвращающая соответствие между датой (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
- QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector){
+ QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> values_map;
 
     for(const auto& structure : data_vector){  // проходим по вектору структур (все сообщения лог-файла)
@@ -62,10 +62,10 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
 
  //Функция, возвращающая соответствие между НЕДЕЛЯМИ (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
-QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector){
+QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> types_map;
 
-    QDate temp_day = data_vector[0].date_time.date();
+    QDate temp_day = begining.date();
 
     for(const auto& structure : data_vector){ // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
@@ -95,15 +95,18 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVec
             }
         }
     }
+    /*
+     если диапазон не закончился
+    */
     return types_map;
 }
 
 //Функция, возвращающая соответствие между промежутками по 8 часов (начиная с первой записи в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
-QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector){
+QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> types_map;
 
-    QDateTime temp_date_time = data_vector[0].date_time;
+    QDateTime temp_date_time = begining;
 
     for(auto structure : data_vector){   // проходим по вектору структур (все сообщения лог-файла)
         QDateTime date = structure.date_time;
@@ -130,5 +133,8 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVe
             }
         }
     }
+    /*
+     если диапазон не закончился
+    */
     return types_map;
 }

@@ -23,8 +23,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton->setMaximumWidth(150);
     ui->label->setMaximumWidth(200);
     adjustSize();
-    // график
-    create_chart();
+
+    create_chart(); // график
+    create_date_time_edit_elements();
+
     // добавление кнопки "Очистить"
     clean_filters_button = new QPushButton("Очистить", this);
     ui->gridLayout->addWidget(clean_filters_button, 3, 7);
@@ -35,17 +37,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gridLayout->addWidget(label, 3, 0);
     label->setText("Применённые:");
 
-    // фильтры
-    create_tree();
-    //таблица
-    create_table();
+    create_tree(); // фильтры
+    create_table(); //таблица
 
     // сигналы
     connect(clean_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_clean_clicked()));
-    connect(ui->dateTimeEdit, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
-  //  ui->dateTimeEdit->keyboardTracking()
-//    connect(ui->dateTimeEdit, SIGNAL(dateTimeChanged(const QDateTime &)), this, SLOT(ChangeDateTimeRange(const QDateTime &)));
- //   connect(ui->dateTimeEdit_2, SIGNAL(editingFinished()), this, SLOT(ChangeDateTimeRange()));
+    connect(restore_date_time_range_button, SIGNAL(clicked()), this, SLOT(on_pushButton_2_clicked()));
+    connect(dateTimeEdit, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
+    connect(dateTimeEdit_2, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
+
 }
 
 MainWindow::~MainWindow()
@@ -120,6 +120,50 @@ void MainWindow::create_tree()
 */
 }
 
+void MainWindow::create_date_time_edit_elements(){
+    // Начало
+    QLabel *label = new QLabel(this);
+    label->setText("Начало:");
+    ui->gridLayout->addWidget(label, 1, 0);
+
+    // начало диапазона
+    dateTimeEdit = new DateTimeEdit(ui->gridLayoutWidget);
+    dateTimeEdit->setObjectName(QString::fromUtf8("dateTimeEdit"));
+    dateTimeEdit->setEnabled(true);
+    dateTimeEdit->setCalendarPopup(true);
+    dateTimeEdit->setDisplayFormat("dd:MM:yyyy hh:mm:ss");
+    dateTimeEdit->setMaximumWidth(180);
+    //ui->gridLayout->addWidget(dateTimeEdit, 1, 2, 1, 1);
+    ui->gridLayout->addWidget(dateTimeEdit, 1, 1);
+
+    // конец
+    QLabel *label1 = new QLabel(this);
+    label1->setText("Конец:");
+    ui->gridLayout->addWidget(label1, 1, 2);
+
+    // конец диапазона
+    dateTimeEdit_2 = new DateTimeEdit(ui->gridLayoutWidget);
+    dateTimeEdit_2->setObjectName(QString::fromUtf8("dateTimeEdit_2"));
+    dateTimeEdit_2->setCalendarPopup(true);
+    dateTimeEdit_2->setDisplayFormat("dd:MM:yyyy hh:mm:ss");
+    dateTimeEdit_2->setMaximumWidth(180);
+    //ui->gridLayout->addWidget(dateTimeEdit_2, 1, 4, 1, 1);
+    ui->gridLayout->addWidget(dateTimeEdit_2, 1, 3);
+
+    // кнопка "Сбросить"
+    restore_date_time_range_button = new QPushButton("Сбросить", this);
+    ui->gridLayout->addWidget(restore_date_time_range_button, 1, 4);
+    restore_date_time_range_button->setMaximumWidth(80);
+
+    // всего сообщений
+    messages_counter = new QLabel(this);
+    messages_counter->setText("Всего записей:");
+    ui->gridLayout->addWidget(messages_counter, 1, 5);
+
+}
+
+
+
 //================================== работа с таблицей, графиками и фильтрами =====================================================================================================================================
 // Функция очистки содержимого окна
 void MainWindow::clear_window_contents(){
@@ -135,7 +179,7 @@ void MainWindow::clear_window_contents(){
             }
         }
     }
-    ui->label_3->setText("Всего записей: ");
+    messages_counter->setText("Всего записей: ");
     delete child;
 }
 
@@ -364,6 +408,9 @@ void MainWindow::ChangeTypeFilters(QTreeWidgetItem*, int)
 void MainWindow::ChangeDateTimeRange()
 {
     qDebug() << "изменение даты";
+    QDateTime temp1 = dateTimeEdit->dateTime();
+    QDateTime temp2 = dateTimeEdit_2->dateTime();
+    emit DateTimeChanged(temp1, temp2);
 }
 
 // =============== вызываются в контроллере ==================================================================
@@ -375,18 +422,25 @@ void MainWindow::GetDataAndFillWindow(Data_Model &data_model){
     fill_filters(data_model.filters_struct);
 
     // отображение данных о лог-файле
-    ui->label_3->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
-    ui->dateTimeEdit->setDateTime(data_model.data_vector[0].date_time);
-    ui->dateTimeEdit_2->setDateTime(data_model.data_vector.last().date_time);
+    messages_counter->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
+    dateTimeEdit->setDateTime(data_model.data_vector[0].date_time);
+    dateTimeEdit_2->setDateTime(data_model.data_vector.last().date_time);
 }
 
 // для восстановления изначального временного диапазона
 void MainWindow::RestoreDateTimeRange(QDateTime& start, QDateTime& finish){
-    ui->dateTimeEdit->setDateTime(start);
-    ui->dateTimeEdit_2->setDateTime(finish);
+    dateTimeEdit->setDateTime(start);
+    dateTimeEdit_2->setDateTime(finish);
 }
 
 void MainWindow::RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>& chart_map,const int& range,const int& counter){
     fill_chart(chart_map, range);
-    ui->label_3->setText("Всего записей: " + QString::number(counter));
+    messages_counter->setText("Всего записей: " + QString::number(counter));
+}
+
+void MainWindow::GetDataAndRebuildWindow(Data_Model &data_model){
+    fill_chart(data_model.chart_map, data_model.time_range);
+    fill_table(data_model.data_vector);
+    fill_filters(data_model.filters_struct);
+    messages_counter->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
 }
