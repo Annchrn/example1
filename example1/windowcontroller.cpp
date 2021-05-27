@@ -49,14 +49,15 @@ void WindowController::OpenFileChicked_handler(const QString& filename){
 }
 
 void WindowController::CleanFiltersClicked_handler(){
-    //тут должны быть нажаты все фильтры, а следовательно, возвращено состояние, как только был открыт файл
     qDebug() << "нажата кнопка <Очистить>";
     // тут сбрасываются только фильтры по типам, но не
 }
 // для восстановления диапазона
 void WindowController::RestoreDataRange_handler(){
-    if(!data_model.data_vector.empty())
+    if(!data_model.data_vector.empty()){
         emit SendInitialDateTimeRangeToForm(data_model.data_vector[0].date_time, data_model.data_vector.last().date_time);
+        emit RebuildWindow(data_model);
+    }
 }
 // для перестроения графика
 void WindowController::TypeFiltersChanged_handler(const QStringList& types_filters_list){
@@ -91,7 +92,7 @@ void WindowController::DateTimeChanged_handler(QDateTime& start, QDateTime& fini
                     current_data_model.chart_map = current_counters.get_chart_map();
 
                     // отправляем модель данных в mainwindow
-                    emit RebuildWindow(data_model);
+                    emit RebuildWindow(current_data_model);
                } else {
                    emit CleanWindowContents();
                    throw std::runtime_error("Недопустимый диапазон");

@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>open_icon.png.jpg</file>
         <file>filter_icon.png</file>
+        <file>arrows_icon.jpg</file>
     </qresource>
 </RCC>

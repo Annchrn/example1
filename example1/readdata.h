@@ -17,6 +17,7 @@ private:
 
     bool file_open();
     QVector<date_time_type_msg> read_txt_file();
+    void process_reg_match(const QString& reg_match, date_time_type_msg& new_struct);
 };
 
 #endif // READDATA_H

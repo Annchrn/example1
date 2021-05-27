@@ -9,18 +9,17 @@ ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector, QDateTime& be
         filters_struct.types_map[structure.type]++;
     }
     // строим модель для графика
-    int days_range = begining.date().daysTo(ending.date()); // количество дней в лог-файле
-    if(days_range <= 3){
+    // диапазон времени между первой и последней записью в секундах
+    time_range = begining.secsTo(ending);
+    if(time_range <= 259200){
         chart_map = make_hours_number_map(data_vector, begining, ending);
     } else {
-        if(days_range > 3 && days_range < 31){
+        if(time_range > 259200 && time_range < 2678400){
             chart_map = make_date_number_map(data_vector, begining, ending);
         } else {
             chart_map = make_week_number_map(data_vector, begining, ending);
         }
      }
-    // диапазон времени между первой и последней записью в секундах
-    time_range = begining.secsTo(ending);
 }
 
 //Функции доступа
@@ -46,16 +45,35 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
     types_map[current_date_time][type] ++;
 }
 
+void ProcessData::fill_map_with_nulls(QMap<QDateTime, QMap<QString, int>>& types_map, QDateTime& temp_date_time)
+{
+    for(const auto& type : filters_struct.types_map.keys()){
+        types_map[temp_date_time][type] = 0;
+    }
+}
+
 //Функция, возвращающая соответствие между датой (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
  QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> values_map;
+
+    QDateTime temp_date = begining;
+    while(temp_date.date() < data_vector[0].date_time.date()){
+        fill_map_with_nulls(values_map, temp_date);
+        temp_date = temp_date.addDays(1);
+    }
 
     for(const auto& structure : data_vector){  // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
         QString type = structure.type;
         QDateTime date_time(date);
         count_types(values_map, type, date_time);
+    }
+
+    temp_date = data_vector.last().date_time.addDays(1);
+    while(temp_date.date() <= ending.date()){
+        fill_map_with_nulls(values_map, temp_date);
+        temp_date = temp_date.addDays(1);
     }
     return values_map;
 }
@@ -64,29 +82,36 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
 // принимает вектор структур data_vector
 QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> types_map;
-
     QDate temp_day = begining.date();
 
+    // если начальная дата меньше, чем дата первого сообщения в лог-файле, заполняем недостающие промежутки нулевыми значениями
+    while(temp_day < data_vector[0].date_time.date()){
+        QDateTime temp_date_time(temp_day);
+        fill_map_with_nulls(types_map, temp_date_time);
+        if(temp_day.addDays(7) < data_vector[0].date_time.date()){
+            temp_day = temp_day.addDays(7);
+        } else {
+            break;
+        }
+    }
     for(const auto& structure : data_vector){ // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
         QString type = structure.type;
-        if (date < temp_day.addDays(7)){
+        if (date < temp_day.addDays(7)){ // если значение вектора структур попадает в текущую "неделю"
             QDateTime temp_date_time(temp_day);
             count_types(types_map, type, temp_date_time);
         } else {
-            if(date < temp_day.addDays(7)){ // если не перескакиваем через неделю
+            if(date < temp_day.addDays(7)){ // если начинается след. неделя, но не перескакиваем через неделю
                 temp_day = temp_day.addDays(7);
                 QDateTime temp_date_time(temp_day);
                 count_types(types_map, type, temp_date_time);
-            } else{
+            } else{         //  если перескакиваем через неделю или больше
                 temp_day = temp_day.addDays(7);
                 while(date > temp_day){
                     if (date < temp_day.addDays(7))
                         break;
-                    for(const auto& type : filters_struct.types_map.keys()){
-                        QDateTime temp_date_time(temp_day);
-                        types_map[temp_date_time][type] = 0;
-                    }
+                    QDateTime temp_date_time(temp_day);
+                    fill_map_with_nulls(types_map, temp_date_time);
                     temp_day = temp_day.addDays(7);
                 }
                 //записываем значение для temp_day
@@ -94,10 +119,15 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVec
                 count_types(types_map, type, temp_date_time);
             }
         }
-    }
-    /*
-     если диапазон не закончился
-    */
+    }    
+    // если диапазон не закончился, заполним оставшиеся промежутки в types_map нулевыми значениями
+     if(types_map.keys().last().addDays(7) < ending){
+         while(temp_day.addDays(7) <= ending.date()){
+             temp_day = temp_day.addDays(7);
+             QDateTime temp_date_time(temp_day);
+             fill_map_with_nulls(types_map, temp_date_time);
+         }
+     }
     return types_map;
 }
 
@@ -105,8 +135,17 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVec
 // принимает вектор структур data_vector
 QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> types_map;
-
     QDateTime temp_date_time = begining;
+
+    // если начальная дата меньше, чем дата первого сообщения в лог-файле, заполняем недостающие промежутки нулевыми значениями
+    while(temp_date_time < data_vector[0].date_time){
+        fill_map_with_nulls(types_map, temp_date_time);
+        if(temp_date_time.addSecs(28800) < data_vector[0].date_time){
+            temp_date_time = temp_date_time.addSecs(28800);
+        } else {
+            break;
+        }
+    }
 
     for(auto structure : data_vector){   // проходим по вектору структур (все сообщения лог-файла)
         QDateTime date = structure.date_time;
@@ -133,8 +172,14 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVe
             }
         }
     }
-    /*
-     если диапазон не закончился
-    */
+
+    // если диапазон не закончился, заполним оставшиеся промежутки в types_map нулевыми значениями
+     if(types_map.keys().last().addSecs(28800) < ending){
+         while(temp_date_time.addSecs(28800) <= ending){
+             temp_date_time = temp_date_time.addSecs(28800);
+             fill_map_with_nulls(types_map, temp_date_time);
+         }
+     }
+
     return types_map;
 }

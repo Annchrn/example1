@@ -25,6 +25,7 @@ HEADERS += \
     mainwindow.h \
     processdata.h \
     readdata.h \
+    tags_structure.h \
     windowcontroller.h
 
 

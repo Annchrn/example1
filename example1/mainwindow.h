@@ -29,7 +29,8 @@ private slots:
     void ChangeTypeFilters(QTreeWidgetItem*, int);
     void ChangeDateTimeRange();
 
-    void clear_chart();
+    void clear_chart();    
+    void expand_and_collapse_treeWidget();
 
     // вызываются в контроллере
     void GetDataAndFillWindow(Data_Model &data_model); //  принимает модель данных и заполняет график, таблицу и фильтры
@@ -50,6 +51,7 @@ private:
 
     QPushButton *clean_filters_button;
     QPushButton *restore_date_time_range_button;
+    QPushButton *expand_button;
 
     QChartView *chartView;
     QTableWidget* tableWidget;
@@ -72,7 +74,6 @@ private:
     void create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values,const int& range);
 
     void TypeFilterTable(const QStringList& types_filters_list);
-    void TypeFilterChart(const QStringList& types_filters_list);
 
     QVector<date_time_type_msg> data_vector; // вектор структур, содержащий все лог-записи из файла
 

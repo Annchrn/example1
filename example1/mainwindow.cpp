@@ -27,24 +27,26 @@ MainWindow::MainWindow(QWidget *parent)
     create_chart(); // график
     create_date_time_edit_elements();
 
-    // добавление кнопки "Очистить"
-    clean_filters_button = new QPushButton("Очистить", this);
-    ui->gridLayout->addWidget(clean_filters_button, 3, 7);
-    clean_filters_button->setMaximumWidth(80);
-
-    // Добавление метки "Применённые фильтры"
-    QLabel *label = new QLabel(this);
-    ui->gridLayout->addWidget(label, 3, 0);
-    label->setText("Применённые:");
-
     create_tree(); // фильтры
     create_table(); //таблица
+
+    // добавление кнопки "Очистить"
+    clean_filters_button = new QPushButton("Очистить", this);
+    ui->gridLayout->addWidget(clean_filters_button, 4, 0, 1, 1);
+
+    expand_button = new QPushButton(this);
+    ui->gridLayout->addWidget(expand_button, 4, 0, 1, 1);
+    expand_button->setIcon(QIcon(":/arrows_icon.jpg"));
+    expand_button->setFixedSize(45, 15);
+    expand_button->setIconSize(expand_button->size());
+    //expand_button->setStyleSheet("   border-width: 12px;     border-color: black;");
 
     // сигналы
     connect(clean_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_clean_clicked()));
     connect(restore_date_time_range_button, SIGNAL(clicked()), this, SLOT(on_pushButton_2_clicked()));
     connect(dateTimeEdit, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
     connect(dateTimeEdit_2, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
+    connect(expand_button, SIGNAL(clicked()), this, SLOT(expand_and_collapse_treeWidget()));
 
 }
 
@@ -88,7 +90,7 @@ void MainWindow::create_table(){
     tableWidget->horizontalHeader()->setFont(QFont("Times", 9));//, QFont::Bold));
     tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
 
-    ui->gridLayout->addWidget(tableWidget, 4, 1, -1, -1);
+    ui->gridLayout->addWidget(tableWidget, 3, 1, -1, -1);
 }
 
 // Инициализаиция QTreeWidget
@@ -97,7 +99,7 @@ void MainWindow::create_tree()
     treeWidget = new QTreeWidget(this);
     treeWidget->setMinimumHeight(500);
     treeWidget->setMaximumWidth(180);
-    ui->gridLayout->addWidget(treeWidget, 4, 0, -1, 1);
+    ui->gridLayout->addWidget(treeWidget, 3, 0, 1, 1);
    // treeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
    // treeWidget->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
@@ -109,15 +111,6 @@ void MainWindow::create_tree()
     QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
     itm->setText(0, "Уровень сообщения");
     itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-/*
-    QTreeWidgetItem *itm1 = new QTreeWidgetItem(treeWidget);
-    itm1->setText(0, "Пользователь");
-    itm1->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-
-    QTreeWidgetItem *itm2 = new QTreeWidgetItem(treeWidget);
-    itm2->setText(0, "Уровень доступа");
-    itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-*/
 }
 
 void MainWindow::create_date_time_edit_elements(){
@@ -161,8 +154,6 @@ void MainWindow::create_date_time_edit_elements(){
     ui->gridLayout->addWidget(messages_counter, 1, 5);
 
 }
-
-
 
 //================================== работа с таблицей, графиками и фильтрами =====================================================================================================================================
 // Функция очистки содержимого окна
@@ -348,6 +339,18 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
     }
     treeWidget->itemAt(0,1)->setExpanded(true);
     connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
+
+    /*
+        QTreeWidgetItem *itm1 = new QTreeWidgetItem(treeWidget);
+        itm1->setText(0, "Пользователь");
+        itm1->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+
+        QTreeWidgetItem *itm2 = new QTreeWidgetItem(treeWidget);
+        itm2->setText(0, "Уровень доступа");
+        itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+    */
+
+
 }
 
 // ==================== фильтрация таблицы при измененении фильтров ====================
@@ -366,6 +369,20 @@ void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
 }
 
 //================================================private slots:====================================================================================================================================================
+
+void MainWindow::expand_and_collapse_treeWidget(){
+    qDebug() << "вызвалась";
+    if(treeWidget->width() > 60){
+        //treeWidget->setColumnHidden(0, true);
+        //treeWidget->setHeaderHidden(true);
+        treeWidget->setMaximumWidth(60);
+        clean_filters_button->setHidden(true);
+    } else{
+        treeWidget->setMaximumWidth(180);
+        clean_filters_button->setHidden(false);
+    }
+
+}
 
 // =============== посылают сигналы в контроллер ==============================================================
 
@@ -407,7 +424,6 @@ void MainWindow::ChangeTypeFilters(QTreeWidgetItem*, int)
 // при изменении диапазона дат
 void MainWindow::ChangeDateTimeRange()
 {
-    qDebug() << "изменение даты";
     QDateTime temp1 = dateTimeEdit->dateTime();
     QDateTime temp2 = dateTimeEdit_2->dateTime();
     emit DateTimeChanged(temp1, temp2);
@@ -441,6 +457,7 @@ void MainWindow::RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>&
 void MainWindow::GetDataAndRebuildWindow(Data_Model &data_model){
     fill_chart(data_model.chart_map, data_model.time_range);
     fill_table(data_model.data_vector);
+
     fill_filters(data_model.filters_struct);
     messages_counter->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
 }

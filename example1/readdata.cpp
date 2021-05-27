@@ -63,7 +63,7 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
                 new_struct.date_time.setTime(QTime(time_list[0].toInt(),time_list[1].toInt(),time_list[2].toInt()));
                 // запись типа и сообщения
                 new_struct.type = reg_match.captured(3);
-                new_struct.message = reg_match.captured(4);
+                process_reg_match(reg_match.captured(4), new_struct);
                 v_data.push_back(new_struct);
               } else {
                   throw std::runtime_error("Ошибка чтения данных");
@@ -74,6 +74,12 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
          }
     file.close();
     return v_data;
+}
+
+void ReadData::process_reg_match(const QString& reg_match, date_time_type_msg& new_struct){
+    QRegularExpression reg("Message= ");
+    QRegularExpressionMatch message_reg_match = reg.match(reg_match);
+    new_struct.message = message_reg_match.captured(4);
 }
 
 //Функция чтения файла, вызывающая, проверяющая успешность открытия файла и возвращающая вектор структур данных из лог-файла
