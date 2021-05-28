@@ -69,13 +69,15 @@ private:
 
     // функции для работы с таблицей, графиком и деревом
     void fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map,const int& range);
-    void fill_table(const QVector<date_time_type_msg>& data_vector);
-    void fill_filters(const Filters_structure& filters_struct);
     void create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>& dates_values,const int& range);
+
+    void fill_table(const QVector<date_time_type_msg>& data_vector);
+
+    void fill_filters(const Filters_structure& filters_struct);
+    void fill_top_level_items(const QMap<QString, int>& map, const int& top_level_item_index);
 
     void TypeFilterTable(const QStringList& types_filters_list);
 
     QVector<date_time_type_msg> data_vector; // вектор структур, содержащий все лог-записи из файла
-
 };
 #endif // MAINWINDOW_H

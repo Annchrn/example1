@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(dateTimeEdit_2, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
     connect(expand_button, SIGNAL(clicked()), this, SLOT(expand_and_collapse_treeWidget()));
 
+   // a = new QGridLayout(this);
 }
 
 MainWindow::~MainWindow()
@@ -76,8 +77,9 @@ void MainWindow::create_table(){
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // столбцы
-    tableWidget->setColumnCount(3);
-    tableWidget->setColumnHidden(2, true);
+    tableWidget->setColumnCount(6);
+    for(int i = 2; i < 6; i++)
+        tableWidget->setColumnHidden(i, true);
     tableWidget->verticalHeader()->setVisible(false);
 
     QStringList name_table;
@@ -98,7 +100,7 @@ void MainWindow::create_tree()
 {
     treeWidget = new QTreeWidget(this);
     treeWidget->setMinimumHeight(500);
-    treeWidget->setMaximumWidth(180);
+    treeWidget->setMaximumWidth(200);
     ui->gridLayout->addWidget(treeWidget, 3, 0, 1, 1);
    // treeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
    // treeWidget->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
@@ -108,9 +110,6 @@ void MainWindow::create_tree()
    // treeWidget->headerItem()->setBackground(0, )
    // treeWidget->headerItem()->setBackgroundColor(0, Qt::blue);
     // добавление элементов
-    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
-    itm->setText(0, "Уровень сообщения");
-    itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
 }
 
 void MainWindow::create_date_time_edit_elements(){
@@ -306,51 +305,101 @@ void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
             item0->setTextAlignment(84);
             item0->setText(data_vector[i].date_time.toString("ddd dd.MM.yyyy hh:mm:ss"));
             tableWidget->setItem(i, 0, item0);
-            // 2-й столбец - "Сообщение"
-            QTableWidgetItem* item1 = new QTableWidgetItem();
-            item1->setTextAlignment(84);
-            item1->setText(data_vector[i].message);
-            tableWidget->setItem(i, 1, item1);
 
             QTableWidgetItem* item3 = new QTableWidgetItem();
             item3->setText(data_vector[i].type);
             tableWidget->setItem(i, 2, item3);
 
-            if(data_vector[i].type == "FTL" || data_vector[i].type == "FATAL"){
+            QString message;
+            if(data_vector[i].user != ""){
+                QTableWidgetItem* item4 = new QTableWidgetItem();
+                item4->setText(data_vector[i].user);
+                tableWidget->setItem(i, 3, item4);
+                message += (" User= " + data_vector[i].user);
+            }
+
+            if(data_vector[i].session_level != ""){
+                QTableWidgetItem* item5 = new QTableWidgetItem();
+                item5->setText(data_vector[i].session_level);
+                tableWidget->setItem(i, 4, item5);
+                message += (" SessionLevel= " + data_vector[i].session_level);
+            }
+
+            if(data_vector[i].server_name != ""){
+                QTableWidgetItem* item6 = new QTableWidgetItem();
+                item6->setText(data_vector[i].server_name);
+                tableWidget->setItem(i, 5, item6);
+                message += (" ServerName= " + data_vector[i].server_name);
+            }
+
+            // 2-й столбец - "Сообщение"
+            QTableWidgetItem* item1 = new QTableWidgetItem();
+            item1->setTextAlignment(84);
+            message += (" Message= "+ data_vector[i].message);
+            item1->setText(message);
+            tableWidget->setItem(i, 1, item1);
+
+            if(data_vector[i].type == "FATAL"){
                 tableWidget->item(i, 0)->setForeground(Qt::red);
                 tableWidget->item(i, 1)->setForeground(Qt::red);
             }
+
             tableWidget->setHidden(false); // отображаем таблицу
         }
     }
 
 // Функция заполнения панели фильтров
-void MainWindow::fill_filters(const Filters_structure& filters_struct){
-    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*, int)));
-    int type_item_index = treeWidget->itemAt(0,1)->childCount();
-    while(type_item_index != -1){
-        treeWidget->itemAt(0,1)->removeChild(treeWidget->itemAt(0,1)->takeChild(type_item_index));
-        type_item_index--;
-    }
-    for(const auto& type : filters_struct.types_map.keys()){
-        QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget->itemAt(0,1));
-        type_item->setText(0, type + " (" + QString::number(filters_struct.types_map.value(type)) + ")");
+void MainWindow::fill_top_level_items(const QMap<QString, int>& map, const int& top_level_item_index)
+{
+    for(const auto& type : map.keys()){
+       QTreeWidgetItem *type_item = new QTreeWidgetItem(treeWidget->topLevelItem(top_level_item_index-1));
+        type_item->setText(0, type + " (" + QString::number(map.value(type)) + ")");
         type_item->setCheckState(0, Qt::Checked);
     }
-    treeWidget->itemAt(0,1)->setExpanded(true);
-    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
+}
 
-    /*
+void MainWindow::fill_filters(const Filters_structure& filters_struct){
+    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*, int)));
+
+    // очищаем старые фильтры
+    for(int i = treeWidget->topLevelItemCount() -1; i >= 0 ; i--){
+        int type_item_index = treeWidget->topLevelItem(i)->childCount();
+        while(type_item_index != -1){
+            treeWidget->topLevelItem(i)->removeChild(treeWidget->topLevelItem(i)->takeChild(type_item_index));
+            type_item_index--;
+        }
+        delete treeWidget->takeTopLevelItem(i);
+    }
+
+    // заполняем фильтры для Уровня сообщений новыми значениями
+    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
+    itm->setText(0, "Уровень сообщения");
+    itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+    fill_top_level_items(filters_struct.types_map, treeWidget->topLevelItemCount());
+
+    if(!filters_struct.users_map.empty()){
         QTreeWidgetItem *itm1 = new QTreeWidgetItem(treeWidget);
         itm1->setText(0, "Пользователь");
         itm1->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-
+        fill_top_level_items(filters_struct.users_map, treeWidget->topLevelItemCount());
+        qDebug() << "пользователь";
+    }
+    if(!filters_struct.levels_map.empty()){
         QTreeWidgetItem *itm2 = new QTreeWidgetItem(treeWidget);
         itm2->setText(0, "Уровень доступа");
         itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
-    */
-
-
+        fill_top_level_items(filters_struct.levels_map, treeWidget->topLevelItemCount());
+        qDebug() << "уровень доступа";
+    }
+    if(!filters_struct.servers_map.empty()){
+        QTreeWidgetItem *itm3 = new QTreeWidgetItem(treeWidget);
+        itm3->setText(0, "Имя сервера");
+        itm3->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+        fill_top_level_items(filters_struct.servers_map, treeWidget->topLevelItemCount());
+        qDebug() << "имя сервера";
+    }
+    treeWidget->expandAll();
+    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
 }
 
 // ==================== фильтрация таблицы при измененении фильтров ====================
@@ -371,7 +420,6 @@ void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
 //================================================private slots:====================================================================================================================================================
 
 void MainWindow::expand_and_collapse_treeWidget(){
-    qDebug() << "вызвалась";
     if(treeWidget->width() > 60){
         //treeWidget->setColumnHidden(0, true);
         //treeWidget->setHeaderHidden(true);
@@ -381,7 +429,6 @@ void MainWindow::expand_and_collapse_treeWidget(){
         treeWidget->setMaximumWidth(180);
         clean_filters_button->setHidden(false);
     }
-
 }
 
 // =============== посылают сигналы в контроллер ==============================================================

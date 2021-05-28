@@ -10,6 +10,7 @@ struct Filters_structure{
     QMap<QString, int> types_map;
     QMap<QString, int> levels_map;
     QMap<QString, int> users_map;
+    QMap<QString, int> servers_map;
 };
 
 struct Data_Model{

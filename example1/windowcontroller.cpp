@@ -109,4 +109,3 @@ void WindowController::DateTimeChanged_handler(QDateTime& start, QDateTime& fini
         QMessageBox::critical(0, "Ошибка", ex.what());
     }
 }
-

@@ -63,7 +63,8 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
                 new_struct.date_time.setTime(QTime(time_list[0].toInt(),time_list[1].toInt(),time_list[2].toInt()));
                 // запись типа и сообщения
                 new_struct.type = reg_match.captured(3);
-                process_reg_match(reg_match.captured(4), new_struct);
+               // new_struct.message = reg_match.captured(4);
+               process_reg_match(reg_match.captured(4), new_struct);
                 v_data.push_back(new_struct);
               } else {
                   throw std::runtime_error("Ошибка чтения данных");
@@ -77,9 +78,41 @@ QVector<date_time_type_msg> ReadData::read_txt_file(){
 }
 
 void ReadData::process_reg_match(const QString& reg_match, date_time_type_msg& new_struct){
-    QRegularExpression reg("Message= ");
+    QRegularExpression user_reg ("(User=) (.*) (SessionLevel=)"); // проверяем, есть ли запись с тэгом "User"
+    QRegularExpressionMatch user_reg_match = user_reg.match(reg_match);
+    if(user_reg_match.hasMatch()){
+        new_struct.user = user_reg_match.captured(2);
+    } else{
+        QRegularExpression user_reg1 ("(User=) (.*) (ServerName=)");
+        QRegularExpressionMatch user_reg_match1 = user_reg.match(reg_match);
+        if(user_reg_match1.hasMatch()){
+            new_struct.user = user_reg_match1.captured(2);
+        } else {
+            QRegularExpression user_reg2 ("(User=) (.*) (Message=)");
+            QRegularExpressionMatch user_reg_match2 = user_reg.match(reg_match);
+            if(user_reg_match2.hasMatch())
+                new_struct.user = user_reg_match2.captured(2);
+        }
+    }
+    QRegularExpression session_level_reg ("(SessionLevel=) (.*) (ServerName=)");    // проверяем, есть ли запись с тэгом "SessionLevel"
+    QRegularExpressionMatch session_level_reg_match = session_level_reg.match(reg_match);
+    if(session_level_reg_match.hasMatch()){
+        new_struct.session_level = session_level_reg_match.captured(2);
+    } else {
+        QRegularExpression session_level_reg1 ("(SessionLevel=) (.*) (Message=)");    // проверяем, есть ли запись с тэгом "SessionLevel"
+        QRegularExpressionMatch session_level_reg_match1 = session_level_reg1.match(reg_match);
+        if(session_level_reg_match.hasMatch())
+            new_struct.session_level = session_level_reg_match1.captured(2);
+    }
+
+    QRegularExpression server_name_reg ("(ServerName=) (.*) (Message=)");    // проверяем, есть ли запись с тэгом "ServerName"
+    QRegularExpressionMatch server_name_reg_match = server_name_reg.match(reg_match);
+    if(server_name_reg_match.hasMatch())
+        new_struct.server_name = server_name_reg_match.captured(2);
+
+    QRegularExpression reg("(Message=) (.*)");
     QRegularExpressionMatch message_reg_match = reg.match(reg_match);
-    new_struct.message = message_reg_match.captured(4);
+    new_struct.message = message_reg_match.captured(2);
 }
 
 //Функция чтения файла, вызывающая, проверяющая успешность открытия файла и возвращающая вектор структур данных из лог-файла

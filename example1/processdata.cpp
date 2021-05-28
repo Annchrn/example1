@@ -7,6 +7,12 @@ ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector, QDateTime& be
     for(const auto& structure : data_vector){
         // заполняем данные для фильтров
         filters_struct.types_map[structure.type]++;
+        if(structure.user != "")
+            filters_struct.users_map[structure.user]++;
+        if(structure.session_level != "")
+            filters_struct.levels_map[structure.session_level]++;
+        if(structure.server_name != "")
+            filters_struct.servers_map[structure.server_name]++;
     }
     // строим модель для графика
     // диапазон времени между первой и последней записью в секундах
