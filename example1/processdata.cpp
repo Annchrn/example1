@@ -1,7 +1,7 @@
 #include "processdata.h"
 #include <QDebug>
 
-ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector, QDateTime& begining, QDateTime& ending)
+ProcessData::ProcessData(QVector<date_time_type_msg> &data_vector, const QDateTime& begining, const QDateTime& ending)
 {
     // строим модель для блока фильтров
     for(const auto& structure : data_vector){
@@ -42,7 +42,7 @@ int ProcessData::get_time_range(){
 }
 
 // Функция заполнения соответствий между типами и количеством сообщений каждого типа
-void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, QDateTime& current_date_time)
+void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QString& type, const QDateTime& current_date_time)
 {
     if(!types_map.contains(current_date_time)){
         for(const auto& type_from_list : filters_struct.types_map.keys())
@@ -51,7 +51,7 @@ void ProcessData::count_types(QMap<QDateTime, QMap<QString, int>>& types_map, QS
     types_map[current_date_time][type] ++;
 }
 
-void ProcessData::fill_map_with_nulls(QMap<QDateTime, QMap<QString, int>>& types_map, QDateTime& temp_date_time)
+void ProcessData::fill_map_with_nulls(QMap<QDateTime, QMap<QString, int>>& types_map, const QDateTime& temp_date_time)
 {
     for(const auto& type : filters_struct.types_map.keys()){
         types_map[temp_date_time][type] = 0;
@@ -60,7 +60,7 @@ void ProcessData::fill_map_with_nulls(QMap<QDateTime, QMap<QString, int>>& types
 
 //Функция, возвращающая соответствие между датой (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
- QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
+ QMap<QDateTime, QMap<QString, int>> ProcessData::make_date_number_map(const QVector<date_time_type_msg>& data_vector, const QDateTime& begining, const QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> values_map;
 
     QDateTime temp_date = begining;
@@ -86,7 +86,7 @@ void ProcessData::fill_map_with_nulls(QMap<QDateTime, QMap<QString, int>>& types
 
  //Функция, возвращающая соответствие между НЕДЕЛЯМИ (начиная с первого дня в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
-QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
+QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVector<date_time_type_msg>& data_vector, const QDateTime& begining, const QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> types_map;
     QDate temp_day = begining.date();
 
@@ -139,7 +139,7 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVec
 
 //Функция, возвращающая соответствие между промежутками по 8 часов (начиная с первой записи в лог-файле) и количеством сообщений каждого типа
 // принимает вектор структур data_vector
-QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector, QDateTime& begining, QDateTime& ending){
+QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVector<date_time_type_msg>& data_vector, const QDateTime& begining, const QDateTime& ending){
     QMap<QDateTime, QMap<QString, int>> types_map;
     QDateTime temp_date_time = begining;
 

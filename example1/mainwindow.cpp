@@ -78,8 +78,8 @@ void MainWindow::create_table(){
 
     // столбцы
     tableWidget->setColumnCount(6);
-    for(int i = 2; i < 6; i++)
-        tableWidget->setColumnHidden(i, true);
+    //for(int i = 2; i < 6; i++)
+      //  tableWidget->setColumnHidden(i, true);
     tableWidget->verticalHeader()->setVisible(false);
 
     QStringList name_table;
@@ -89,7 +89,7 @@ void MainWindow::create_table(){
     tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     tableWidget->setFont(QFont("Times", 9));
-    tableWidget->horizontalHeader()->setFont(QFont("Times", 9));//, QFont::Bold));
+    tableWidget->horizontalHeader()->setFont(QFont("Times", 9));
     tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
 
     ui->gridLayout->addWidget(tableWidget, 3, 1, -1, -1);
@@ -162,18 +162,18 @@ void MainWindow::clear_window_contents(){
         clear_chart();
         tableWidget->clearContents();
         tableWidget->setRowCount(0);
-        // treeWidget->clear();
-        for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
+        treeWidget->clear();
+        /*for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
             for(int k = treeWidget->topLevelItem(i)->childCount(); k >= 0; k--){
                 treeWidget->topLevelItem(i)->removeChild(treeWidget->topLevelItem(i)->child(k));
             }
-        }
+        }*/
     }
     messages_counter->setText("Всего записей: ");
     delete child;
 }
 
-// ==================== график ====================
+// ==================== График ==================================================================================
 
 // Функция очистки графика
 // удаляет series и axixX, axisY из графика
@@ -216,22 +216,6 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             series->append(set_map.value(type));
         }
 
-        /*
-        // посчитать количество логов и сделать число, по которому будет меняться цвет
-        // если логов 10, то r-15 g -20 b-20
-        // это число = 150 / количество логов
-        int R=150, G=200, B=255;
-       *  int k = int(150 / set_vector.size());
-        for(auto& set : set_vector){
-            set.setColor(QColor(R, G, B));
-            if(R>=0)
-                R-=15;
-            if(G>=0)
-                G+=;
-            if(B>=0)
-                B+=30;
-        }
-*/
         QChart *chart = chartView->chart();
         chart->addSeries(series);
 
@@ -291,7 +275,7 @@ void MainWindow::create_axisX(QBarCategoryAxis *axisX, const QVector<QDateTime>&
     // менять размер шрифта, если нужно axisX->setLabelsFont(QFont("Times", 8));
 }
 
-// ==================== таблица и фильтры ====================
+// ==================== Таблица ===============================================================================
 
 // Функция заполнения таблицы
 void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
@@ -348,6 +332,15 @@ void MainWindow::fill_table(const QVector<date_time_type_msg>& data_vector){
         }
     }
 
+// ========================= Фильтры ===============================================================================
+
+// Функция добавления типа фильтров
+void MainWindow::add_top_level_item(const QString& name){
+    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
+    itm->setText(0, name);
+    itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+}
+
 // Функция заполнения панели фильтров
 void MainWindow::fill_top_level_items(const QMap<QString, int>& map, const int& top_level_item_index)
 {
@@ -372,31 +365,20 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
     }
 
     // заполняем фильтры для Уровня сообщений новыми значениями
-    QTreeWidgetItem *itm = new QTreeWidgetItem(treeWidget);
-    itm->setText(0, "Уровень сообщения");
-    itm->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+    add_top_level_item(QString("Уровень сообщения"));
     fill_top_level_items(filters_struct.types_map, treeWidget->topLevelItemCount());
 
     if(!filters_struct.users_map.empty()){
-        QTreeWidgetItem *itm1 = new QTreeWidgetItem(treeWidget);
-        itm1->setText(0, "Пользователь");
-        itm1->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+        add_top_level_item(QString("Пользователь"));
         fill_top_level_items(filters_struct.users_map, treeWidget->topLevelItemCount());
-        qDebug() << "пользователь";
     }
     if(!filters_struct.levels_map.empty()){
-        QTreeWidgetItem *itm2 = new QTreeWidgetItem(treeWidget);
-        itm2->setText(0, "Уровень доступа");
-        itm2->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+        add_top_level_item(QString("Уровень доступа"));
         fill_top_level_items(filters_struct.levels_map, treeWidget->topLevelItemCount());
-        qDebug() << "уровень доступа";
     }
     if(!filters_struct.servers_map.empty()){
-        QTreeWidgetItem *itm3 = new QTreeWidgetItem(treeWidget);
-        itm3->setText(0, "Имя сервера");
-        itm3->setChildIndicatorPolicy(QTreeWidgetItem::ChildIndicatorPolicy::DontShowIndicatorWhenChildless);
+        add_top_level_item(QString("Имя сервера"));
         fill_top_level_items(filters_struct.servers_map, treeWidget->topLevelItemCount());
-        qDebug() << "имя сервера";
     }
     treeWidget->expandAll();
     connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
@@ -405,18 +387,26 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
 // ==================== фильтрация таблицы при измененении фильтров ====================
 
 void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
-    // фильтруем содержимое таблицы в соответствии с types_filters_list()
+    // фильтруем содержимое таблицы в соответствии с types_filters_list
     for(int i = 0; i < tableWidget->rowCount(); i++){
+        // если строка таблицы содержит отмеченный в фильтрах уровень сообщения
         if(types_filters_list.contains(tableWidget->item(i, 2)->text())){
-            if (tableWidget->isRowHidden(i)){
+            if (tableWidget->isRowHidden(i))
                 tableWidget->setRowHidden(i, false);
-            }
+        } else if(tableWidget->item(i, 3) && types_filters_list.contains(tableWidget->item(i, 3)->text())){
+            if (tableWidget->isRowHidden(i))
+                tableWidget->setRowHidden(i, false);
+        } else if(tableWidget->item(i, 4) && types_filters_list.contains(tableWidget->item(i, 4)->text())){
+            if (tableWidget->isRowHidden(i))
+                tableWidget->setRowHidden(i, false);
+        } else if(tableWidget->item(i, 5) && types_filters_list.contains(tableWidget->item(i, 5)->text())){
+            if (tableWidget->isRowHidden(i))
+                tableWidget->setRowHidden(i, false);
         } else{
             tableWidget->setRowHidden(i, true);
         }
-    }
 }
-
+}
 //================================================private slots:====================================================================================================================================================
 
 void MainWindow::expand_and_collapse_treeWidget(){
@@ -459,13 +449,17 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::ChangeTypeFilters(QTreeWidgetItem*, int)
 {
     QStringList types_filters_list;
-    for(int i = 0; i < treeWidget->topLevelItem(0)->childCount(); i++){
-        if(treeWidget->topLevelItem(0)->child(i)->checkState(0)){
-            types_filters_list.append(treeWidget->topLevelItem(0)->child(i)->text(0).split(" ")[0]);
+    for(int k = 0; k < treeWidget->topLevelItemCount(); k++){
+        for(int i = 0; i < treeWidget->topLevelItem(k)->childCount(); i++){
+            if(treeWidget->topLevelItem(k)->child(i)->checkState(0)){
+                int index = treeWidget->topLevelItem(k)->child(i)->text(0).lastIndexOf("(");
+                types_filters_list.append(treeWidget->topLevelItem(k)->child(i)->text(0).left(index).simplified());
+            }
         }
     }
+    qDebug() << types_filters_list;
     TypeFilterTable(types_filters_list);
-    emit TypeFiltersChanged(types_filters_list);
+    emit FiltersChanged(types_filters_list, dateTimeEdit->dateTime(), dateTimeEdit_2->dateTime());
 }
 
 // при изменении диапазона дат
@@ -485,7 +479,7 @@ void MainWindow::GetDataAndFillWindow(Data_Model &data_model){
     fill_filters(data_model.filters_struct);
 
     // отображение данных о лог-файле
-    messages_counter->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
+    messages_counter->setText("Показано записей: " + QString::number(data_model.data_vector.size()));
     dateTimeEdit->setDateTime(data_model.data_vector[0].date_time);
     dateTimeEdit_2->setDateTime(data_model.data_vector.last().date_time);
 }
@@ -498,7 +492,7 @@ void MainWindow::RestoreDateTimeRange(QDateTime& start, QDateTime& finish){
 
 void MainWindow::RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>& chart_map,const int& range,const int& counter){
     fill_chart(chart_map, range);
-    messages_counter->setText("Всего записей: " + QString::number(counter));
+    messages_counter->setText("Показано записей: " + QString::number(counter));
 }
 
 void MainWindow::GetDataAndRebuildWindow(Data_Model &data_model){
@@ -506,5 +500,5 @@ void MainWindow::GetDataAndRebuildWindow(Data_Model &data_model){
     fill_table(data_model.data_vector);
 
     fill_filters(data_model.filters_struct);
-    messages_counter->setText("Всего записей: " + QString::number(data_model.data_vector.size()));
+    messages_counter->setText("Показано записей: " + QString::number(data_model.data_vector.size()));
 }

@@ -101,7 +101,7 @@ void ReadData::process_reg_match(const QString& reg_match, date_time_type_msg& n
     } else {
         QRegularExpression session_level_reg1 ("(SessionLevel=) (.*) (Message=)");    // проверяем, есть ли запись с тэгом "SessionLevel"
         QRegularExpressionMatch session_level_reg_match1 = session_level_reg1.match(reg_match);
-        if(session_level_reg_match.hasMatch())
+        if(session_level_reg_match1.hasMatch())
             new_struct.session_level = session_level_reg_match1.captured(2);
     }
 

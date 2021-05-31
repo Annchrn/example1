@@ -19,7 +19,7 @@ void WindowController::InitializeConnections(){
     connect(window, SIGNAL(OpenFileClicked(const QString&)), this, SLOT(OpenFileChicked_handler(const QString&)));
     connect(window, SIGNAL(CleanFiltersClicked()), this, SLOT(CleanFiltersClicked_handler()));  //кнопка "Очистить"
     connect(window, SIGNAL(RestoreDataRange()), this, SLOT(RestoreDataRange_handler())); // кнопка "Сбросить"
-    connect(window, SIGNAL(TypeFiltersChanged(const QStringList&)), this, SLOT(TypeFiltersChanged_handler(const QStringList&)));
+    connect(window, SIGNAL(FiltersChanged(const QStringList&)), this, SLOT(FiltersChanged_handler(const QStringList&)));
     connect(window, SIGNAL(DateTimeChanged(QDateTime&, QDateTime&)), this, SLOT(DateTimeChanged_handler(QDateTime&, QDateTime&)));
 
     //сингалы от контроллера в mainwindow
@@ -60,15 +60,16 @@ void WindowController::RestoreDataRange_handler(){
     }
 }
 // для перестроения графика
-void WindowController::TypeFiltersChanged_handler(const QStringList& types_filters_list){
+void WindowController::FiltersChanged_handler(const QStringList& types_filters_list, const QDateTime& begining,const QDateTime& ending){
     QVector<date_time_type_msg> current_data_vector;
     for(const auto& structure : data_model.data_vector){
-        if(types_filters_list.contains(structure.type))
+        if(types_filters_list.contains(structure.type)){
             current_data_vector.append(structure);
+        }
     }
     if(!current_data_vector.empty()){
-        ProcessData current_counters(current_data_vector, current_data_vector.first().date_time, current_data_vector.last().date_time);
-        emit RebuildChart(current_counters.get_chart_map(), current_counters.get_time_range(), current_data_vector.size());
+        ProcessData current_counters(current_data_vector, begining, ending);
+        emit RebuildChart(current_counters.get_chart_map(), begining.secsTo(ending), current_data_vector.size());
     } else{
         emit ClearSeries();
     }

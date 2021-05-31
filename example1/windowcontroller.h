@@ -16,7 +16,7 @@ private slots:
     void OpenFileChicked_handler(const QString& filename);
     void CleanFiltersClicked_handler();
     void RestoreDataRange_handler();
-    void TypeFiltersChanged_handler(const QStringList& types_filters_list); // при изменении фильтров "Уровень сообщения"
+    void FiltersChanged_handler(const QStringList& types_filters_list, const QDateTime& begining,const QDateTime& ending); // при изменении фильтров "Уровень сообщения"
     void DateTimeChanged_handler(QDateTime&, QDateTime&);
 
 signals:

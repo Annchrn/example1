@@ -43,7 +43,7 @@ signals:
     void OpenFileClicked(const QString& filename);
     void CleanFiltersClicked();
     void RestoreDataRange();
-    void TypeFiltersChanged(const QStringList&);
+    void FiltersChanged(const QStringList&, const QDateTime&,const QDateTime&);
     void DateTimeChanged(QDateTime&, QDateTime&);
 
 private:
@@ -75,6 +75,7 @@ private:
 
     void fill_filters(const Filters_structure& filters_struct);
     void fill_top_level_items(const QMap<QString, int>& map, const int& top_level_item_index);
+    void add_top_level_item(const QString& name);
 
     void TypeFilterTable(const QStringList& types_filters_list);
 
