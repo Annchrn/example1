@@ -78,8 +78,8 @@ void MainWindow::create_table(){
 
     // столбцы
     tableWidget->setColumnCount(6);
-    //for(int i = 2; i < 6; i++)
-      //  tableWidget->setColumnHidden(i, true);
+    for(int i = 2; i < 6; i++)
+        tableWidget->setColumnHidden(i, true);
     tableWidget->verticalHeader()->setVisible(false);
 
     QStringList name_table;
@@ -107,9 +107,6 @@ void MainWindow::create_tree()
 
     treeWidget->setHeaderLabel("Фильтры");
     treeWidget->headerItem()->setIcon(0, QIcon(":/filter_icon.png"));
-   // treeWidget->headerItem()->setBackground(0, )
-   // treeWidget->headerItem()->setBackgroundColor(0, Qt::blue);
-    // добавление элементов
 }
 
 void MainWindow::create_date_time_edit_elements(){
@@ -175,7 +172,7 @@ void MainWindow::clear_window_contents(){
 
 // ==================== График ==================================================================================
 
-// Функция очистки графика
+// Функция полной очистки графика
 // удаляет series и axixX, axisY из графика
 void MainWindow::clear_chart()
 {
@@ -183,12 +180,27 @@ void MainWindow::clear_chart()
     // удаляем оси, если они уже были установлены
     auto *daxisX = chartView->chart()->axisX();
     auto *daxisY = chartView->chart()->axisY();
-    if(daxisX && daxisY){
+    if(daxisX){
         chartView->chart()->removeAxis(daxisX);
-        delete daxisX;
+        delete daxisX;      
+    }
+    if(daxisY){
         chartView->chart()->removeAxis(daxisY);
         delete daxisY;
     }
+}
+
+// // Функция очистки графика
+// удаляет series и axixX, axisY из графика
+void MainWindow::clear_series()
+{
+    chartView->chart()->removeAllSeries();
+    auto *daxisY = chartView->chart()->axisY();
+    if(daxisY){
+        chartView->chart()->removeAxis(daxisY);
+        delete daxisY;
+    }
+    messages_counter->setText("Показано записей: 0");
 }
 
 // Функция заполнения и построения графика, где даты имеют тип QDateTime
@@ -413,7 +425,7 @@ void MainWindow::expand_and_collapse_treeWidget(){
     if(treeWidget->width() > 60){
         //treeWidget->setColumnHidden(0, true);
         //treeWidget->setHeaderHidden(true);
-        treeWidget->setMaximumWidth(60);
+        treeWidget->setMaximumWidth(25);
         clean_filters_button->setHidden(true);
     } else{
         treeWidget->setMaximumWidth(180);
@@ -436,7 +448,21 @@ void MainWindow::on_pushButton_clicked()
 // кнопка "Очистить"
 void MainWindow::on_pushButton_clean_clicked()
 {
-    emit CleanFiltersClicked();
+    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*, int)));
+   // отмечаем все фильтры
+    for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
+        for(int k = 0; k < treeWidget->topLevelItem(i)->childCount(); k++){
+            if(treeWidget->topLevelItem(i)->child(k)->checkState(0) == Qt::Unchecked){
+                treeWidget->topLevelItem(i)->child(k)->setCheckState(0, Qt::Checked);
+            }
+        }
+    }
+    for(int i = 0; i < tableWidget->rowCount(); i++){
+        if(tableWidget->isRowHidden(i))
+            tableWidget->setRowHidden(i, false);
+    }
+    emit CleanFiltersClicked(dateTimeEdit->dateTime(), dateTimeEdit_2->dateTime());
+    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
 }
 
 // кнопка "Сбросить"
@@ -457,7 +483,6 @@ void MainWindow::ChangeTypeFilters(QTreeWidgetItem*, int)
             }
         }
     }
-    qDebug() << types_filters_list;
     TypeFilterTable(types_filters_list);
     emit FiltersChanged(types_filters_list, dateTimeEdit->dateTime(), dateTimeEdit_2->dateTime());
 }

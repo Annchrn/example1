@@ -17,9 +17,9 @@ WindowController::WindowController(MainWindow *w)
 void WindowController::InitializeConnections(){
     // сигналы от mainwindow в контроллер
     connect(window, SIGNAL(OpenFileClicked(const QString&)), this, SLOT(OpenFileChicked_handler(const QString&)));
-    connect(window, SIGNAL(CleanFiltersClicked()), this, SLOT(CleanFiltersClicked_handler()));  //кнопка "Очистить"
+    connect(window, SIGNAL(CleanFiltersClicked(const QDateTime&,const QDateTime&)), this, SLOT(CleanFiltersClicked_handler(const QDateTime&,const QDateTime&)));  //кнопка "Очистить"
     connect(window, SIGNAL(RestoreDataRange()), this, SLOT(RestoreDataRange_handler())); // кнопка "Сбросить"
-    connect(window, SIGNAL(FiltersChanged(const QStringList&)), this, SLOT(FiltersChanged_handler(const QStringList&)));
+    connect(window, SIGNAL(FiltersChanged(const QStringList&, const QDateTime&,const QDateTime&)), this, SLOT(FiltersChanged_handler(const QStringList&, const QDateTime&,const QDateTime&)));
     connect(window, SIGNAL(DateTimeChanged(QDateTime&, QDateTime&)), this, SLOT(DateTimeChanged_handler(QDateTime&, QDateTime&)));
 
     //сингалы от контроллера в mainwindow
@@ -27,9 +27,11 @@ void WindowController::InitializeConnections(){
     connect(this, SIGNAL(SendInitialDateTimeRangeToForm(QDateTime&, QDateTime&)), window, SLOT(RestoreDateTimeRange(QDateTime&, QDateTime&)));
     connect(this, SIGNAL(CleanWindowContents()), window, SLOT(clear_window_contents()));
     connect(this, SIGNAL (RebuildChart(const QMap<QDateTime, QMap<QString, int>>&,const int&, const int&)), window, SLOT(RebuildChart_handler(const QMap<QDateTime, QMap<QString, int>>&,const int&,const int&)));
-    connect(this, SIGNAL(ClearSeries()), window, SLOT(clear_chart()));
+    connect(this, SIGNAL(ClearSeries()), window, SLOT(clear_series()));
     connect(this, SIGNAL(RebuildWindow(Data_Model&)), window, SLOT(GetDataAndRebuildWindow(Data_Model&)));
 }
+
+// обработка сигнала открытия файла
 void WindowController::OpenFileChicked_handler(const QString& filename){
     ReadData data_read(filename);
     QVector<date_time_type_msg> data_vector = data_read.file_read();
@@ -48,22 +50,32 @@ void WindowController::OpenFileChicked_handler(const QString& filename){
     }
 }
 
-void WindowController::CleanFiltersClicked_handler(){
+// обработка сигнала нажатия кнопки "Очистить"
+void WindowController::CleanFiltersClicked_handler(const QDateTime& begining, const QDateTime& ending){
     qDebug() << "нажата кнопка <Очистить>";
-    // тут сбрасываются только фильтры по типам, но не
+    ProcessData counters(data_model.data_vector, begining, ending);
+    emit RebuildChart(counters.get_chart_map(), counters.get_time_range(), data_model.data_vector.size());
 }
-// для восстановления диапазона
+
+// обработка сигнала нажатия кнопки "Сбросить"
 void WindowController::RestoreDataRange_handler(){
     if(!data_model.data_vector.empty()){
         emit SendInitialDateTimeRangeToForm(data_model.data_vector[0].date_time, data_model.data_vector.last().date_time);
         emit RebuildWindow(data_model);
     }
 }
-// для перестроения графика
-void WindowController::FiltersChanged_handler(const QStringList& types_filters_list, const QDateTime& begining,const QDateTime& ending){
+
+// обработка сигнала изменения фильтров
+void WindowController::FiltersChanged_handler(const QStringList& types_filters_list, const QDateTime& begining, const QDateTime& ending){
     QVector<date_time_type_msg> current_data_vector;
     for(const auto& structure : data_model.data_vector){
         if(types_filters_list.contains(structure.type)){
+            current_data_vector.append(structure);
+        } else if(structure.user != "" && types_filters_list.contains(structure.user)){
+            current_data_vector.append(structure);
+        } else if(structure.session_level != "" && types_filters_list.contains(structure.session_level)){
+            current_data_vector.append(structure);
+        } else if(structure.server_name != "" && types_filters_list.contains(structure.server_name)){
             current_data_vector.append(structure);
         }
     }
@@ -74,6 +86,8 @@ void WindowController::FiltersChanged_handler(const QStringList& types_filters_l
         emit ClearSeries();
     }
 }
+
+// обработка сигнала изменения диапазона даты/времени
 void WindowController::DateTimeChanged_handler(QDateTime& start, QDateTime& finish){
     try {
         if(!data_model.data_vector.empty()){

@@ -29,7 +29,8 @@ private slots:
     void ChangeTypeFilters(QTreeWidgetItem*, int);
     void ChangeDateTimeRange();
 
-    void clear_chart();    
+    void clear_chart();
+    void clear_series();
     void expand_and_collapse_treeWidget();
 
     // вызываются в контроллере
@@ -41,7 +42,7 @@ private slots:
 
 signals:
     void OpenFileClicked(const QString& filename);
-    void CleanFiltersClicked();
+    void CleanFiltersClicked(const QDateTime&,const QDateTime&);
     void RestoreDataRange();
     void FiltersChanged(const QStringList&, const QDateTime&,const QDateTime&);
     void DateTimeChanged(QDateTime&, QDateTime&);

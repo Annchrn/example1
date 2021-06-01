@@ -72,6 +72,13 @@ void ProcessData::fill_map_with_nulls(QMap<QDateTime, QMap<QString, int>>& types
     for(const auto& structure : data_vector){  // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
         QString type = structure.type;
+
+        if(date < begining.date()){
+            continue;
+        }
+        if(date > ending.date()){
+            break;
+        }
         QDateTime date_time(date);
         count_types(values_map, type, date_time);
     }
@@ -103,6 +110,14 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_week_number_map(const QVec
     for(const auto& structure : data_vector){ // проходим по вектору структур (все сообщения лог-файла)
         QDate date = structure.date_time.date();
         QString type = structure.type;
+
+        if(date < begining.date()){
+            continue;
+        }
+        if(date > ending.date()){
+            break;
+        }
+
         if (date < temp_day.addDays(7)){ // если значение вектора структур попадает в текущую "неделю"
             QDateTime temp_date_time(temp_day);
             count_types(types_map, type, temp_date_time);
@@ -156,6 +171,12 @@ QMap<QDateTime, QMap<QString, int>> ProcessData::make_hours_number_map(const QVe
     for(auto structure : data_vector){   // проходим по вектору структур (все сообщения лог-файла)
         QDateTime date = structure.date_time;
         QString type = structure.type;
+        if(date < begining){
+            continue;
+        }
+        if(date > ending){
+            break;
+        }
         if (date < temp_date_time.addSecs(28800)){
             count_types(types_map, type, temp_date_time);
         } else {
