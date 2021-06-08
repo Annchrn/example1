@@ -24,8 +24,12 @@ public slots:
 
 private slots:
     void on_pushButton_clicked(); // кнопка "Открыть файл"
+<<<<<<< HEAD
     void on_pushButton_check_all_clicked(); // кнопка "Отметить всё"
  //   void on_pushButton_clean_all_clicked(); // кнопка "Очистить всё"
+=======
+    void on_pushButton_clean_clicked(); // кнопка "Очистить"
+>>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     void on_pushButton_2_clicked(); // кнопка "Сбросить"
     void ChangeTypeFilters(QTreeWidgetItem*, int);
     void ChangeDateTimeRange();
@@ -43,7 +47,11 @@ private slots:
 
 signals:
     void OpenFileClicked(const QString& filename);
+<<<<<<< HEAD
     void Check_all_FiltersClicked(const QDateTime&,const QDateTime&);
+=======
+    void CleanFiltersClicked(const QDateTime&,const QDateTime&);
+>>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     void RestoreDataRange();
     void FiltersChanged(const QStringList&, const QDateTime&,const QDateTime&);
     void DateTimeChanged(QDateTime&, QDateTime&);
@@ -51,8 +59,12 @@ signals:
 private:
     Ui::MainWindow *ui;
 
+<<<<<<< HEAD
     QPushButton *check_all_filters_button;
     QPushButton *uncheck_all_filters_button;
+=======
+    QPushButton *clean_filters_button;
+>>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     QPushButton *restore_date_time_range_button;
     QPushButton *expand_button;
 

@@ -17,7 +17,11 @@ WindowController::WindowController(MainWindow *w)
 void WindowController::InitializeConnections(){
     // сигналы от mainwindow в контроллер
     connect(window, SIGNAL(OpenFileClicked(const QString&)), this, SLOT(OpenFileChicked_handler(const QString&)));
+<<<<<<< HEAD
     connect(window, SIGNAL(Check_all_FiltersClicked(const QDateTime&,const QDateTime&)), this, SLOT(Check_all_FiltersClicked_handler(const QDateTime&,const QDateTime&)));  //кнопка "Очистить"
+=======
+    connect(window, SIGNAL(CleanFiltersClicked(const QDateTime&,const QDateTime&)), this, SLOT(CleanFiltersClicked_handler(const QDateTime&,const QDateTime&)));  //кнопка "Очистить"
+>>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     connect(window, SIGNAL(RestoreDataRange()), this, SLOT(RestoreDataRange_handler())); // кнопка "Сбросить"
     connect(window, SIGNAL(FiltersChanged(const QStringList&, const QDateTime&,const QDateTime&)), this, SLOT(FiltersChanged_handler(const QStringList&, const QDateTime&,const QDateTime&)));
     connect(window, SIGNAL(DateTimeChanged(QDateTime&, QDateTime&)), this, SLOT(DateTimeChanged_handler(QDateTime&, QDateTime&)));
@@ -51,7 +55,11 @@ void WindowController::OpenFileChicked_handler(const QString& filename){
 }
 
 // обработка сигнала нажатия кнопки "Очистить"
+<<<<<<< HEAD
 void WindowController::Check_all_FiltersClicked_handler(const QDateTime& begining, const QDateTime& ending){
+=======
+void WindowController::CleanFiltersClicked_handler(const QDateTime& begining, const QDateTime& ending){
+>>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     qDebug() << "нажата кнопка <Очистить>";
     ProcessData counters(data_model.data_vector, begining, ending);
     emit RebuildChart(counters.get_chart_map(), counters.get_time_range(), data_model.data_vector.size());
