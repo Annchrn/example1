@@ -1,0 +1,16 @@
+27/05/2021 09:29:53 INFO Message= Log file rewrited
+27/05/2021 09:29:53 FATAL Message= Start program 
+27/05/2021 09:56:04 DEBUG User= Администратор SessionLevel= Не секретно ServerName= 127.0.0.1:31000 Message= Start program 
+27/05/2021 09:56:21 DEBUG User= Администратор SessionLevel= Не секретно ServerName= 127.0.0.1:31000 Message= Start program 
+28/05/2021 09:56:45 DEBUG User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Connection successful
+28/05/2021 09:29:53 INFO Message= Log file rewrited
+28/05/2021 09:29:53 FATAL Message= Start program 
+28/05/2021 09:56:04 INFO User= kek SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Start program 
+28/05/2021 09:56:21 INFO User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Start program 
+28/05/2021 09:56:45 DEBUG User= Администратор SessionLevel= ДСП Message= Connection successful
+28/05/2021 09:29:53 DEBUG Message= Log file rewrited
+29/05/2021 09:29:53 INFO Message= Start program 
+29/05/2021 09:29:53 INFO SessionLevel= kek Message= Start program
+29/05/2021 09:56:04 INFO User= Администратор SessionLevel= ДСП Message= Start program 
+29/05/2021 09:56:21 FATAL User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:3102340 Message= Start program 
+29/05/2021 09:56:45 INFO User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Connection successful

@@ -1,0 +1,5 @@
+27/05/2021 09:29:53 INFO Message= Log file rewrited
+27/05/2021 09:29:53 INFO Message= Start program 
+27/05/2021 09:56:04 INFO User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Start program 
+27/05/2021 09:56:21 INFO User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Start program 
+27/05/2021 09:56:45 INFO User= Администратор SessionLevel= ДСП ServerName= 127.0.0.1:31000 Message= Connection successful
