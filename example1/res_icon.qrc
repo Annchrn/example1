@@ -2,11 +2,6 @@
     <qresource prefix="/">
         <file>open_icon.png.jpg</file>
         <file>filter_icon.png</file>
-<<<<<<< HEAD
-        <file>left.jpg</file>
-        <file>right.png</file>
-=======
         <file>arrows_icon.jpg</file>
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     </qresource>
 </RCC>

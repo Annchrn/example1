@@ -31,23 +31,6 @@ MainWindow::MainWindow(QWidget *parent)
     create_table(); //таблица
 
     // добавление кнопки "Очистить"
-<<<<<<< HEAD
-    check_all_filters_button = new QPushButton("Отметить всё", this);
-    ui->gridLayout->addWidget(check_all_filters_button, 4, 0, 1, 1);
-
-
-    uncheck_all_filters_button = new QPushButton("Очистить всё", this);
-    ui->gridLayout->addWidget(uncheck_all_filters_button, 5, 0, 1, 1);
-
-    expand_button = new QPushButton(this);
-    ui->gridLayout->addWidget(expand_button, 6, 0, 1, 1, Qt::Alignment() = Qt::AlignRight);
-    expand_button->setIcon(QIcon(":/left.jpg"));
-    expand_button->setFixedSize(25, 20);
-    expand_button->setIconSize(expand_button->size());
-
-    // сигналы
-    connect(check_all_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_check_all_clicked()));
-=======
     clean_filters_button = new QPushButton("Очистить", this);
     ui->gridLayout->addWidget(clean_filters_button, 4, 0, 1, 1);
 
@@ -60,16 +43,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // сигналы
     connect(clean_filters_button, SIGNAL (clicked()), this, SLOT (on_pushButton_clean_clicked()));
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     connect(restore_date_time_range_button, SIGNAL(clicked()), this, SLOT(on_pushButton_2_clicked()));
     connect(dateTimeEdit, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
     connect(dateTimeEdit_2, SIGNAL(EnterPressed()), this, SLOT(ChangeDateTimeRange()));
     connect(expand_button, SIGNAL(clicked()), this, SLOT(expand_and_collapse_treeWidget()));
 
-<<<<<<< HEAD
-=======
    // a = new QGridLayout(this);
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
 }
 
 MainWindow::~MainWindow()
@@ -108,19 +87,11 @@ void MainWindow::create_table(){
     tableWidget->setHorizontalHeaderLabels(name_table);
     tableWidget->setColumnWidth(0, 200);
     tableWidget->horizontalHeader()->setStretchLastSection(true);
-<<<<<<< HEAD
 
     tableWidget->setFont(QFont("Times", 9));
     tableWidget->horizontalHeader()->setFont(QFont("Times", 9));
     tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
 
-=======
-
-    tableWidget->setFont(QFont("Times", 9));
-    tableWidget->horizontalHeader()->setFont(QFont("Times", 9));
-    tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}" );
-
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     ui->gridLayout->addWidget(tableWidget, 3, 1, -1, -1);
 }
 
@@ -250,14 +221,6 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
             for(const auto& type : types_map.value(date_time).keys()){ // проходим по массиву с типами и их количеством для каждого промежутка времени
                     *set_map[type] << types_map.value(date_time).value(type);
             }
-<<<<<<< HEAD
-=======
-        }
-        //  добавляем "кусочки" гистограммы на график
-        QStackedBarSeries* series = new QStackedBarSeries(this);
-        for(const auto& type : set_map.keys()){
-            series->append(set_map.value(type));
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
         }
         //  добавляем "кусочки" гистограммы на график
         QStackedBarSeries* series = new QStackedBarSeries(this);
@@ -268,12 +231,6 @@ void MainWindow::fill_chart(const QMap<QDateTime, QMap<QString, int>>& types_map
         QChart *chart = chartView->chart();
         chart->addSeries(series);
 
-<<<<<<< HEAD
-=======
-        QChart *chart = chartView->chart();
-        chart->addSeries(series);
-
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
         // ось х
         QBarCategoryAxis *axisX = new QBarCategoryAxis(this);
         create_axisX(axisX, values, range);
@@ -437,37 +394,8 @@ void MainWindow::fill_filters(const Filters_structure& filters_struct){
     }
     treeWidget->expandAll();
     connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
-<<<<<<< HEAD
-=======
 }
 
-// ==================== фильтрация таблицы при измененении фильтров ====================
-
-void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
-    // фильтруем содержимое таблицы в соответствии с types_filters_list
-    for(int i = 0; i < tableWidget->rowCount(); i++){
-        // если строка таблицы содержит отмеченный в фильтрах уровень сообщения
-        if(types_filters_list.contains(tableWidget->item(i, 2)->text())){
-            if (tableWidget->isRowHidden(i))
-                tableWidget->setRowHidden(i, false);
-        } else if(tableWidget->item(i, 3) && types_filters_list.contains(tableWidget->item(i, 3)->text())){
-            if (tableWidget->isRowHidden(i))
-                tableWidget->setRowHidden(i, false);
-        } else if(tableWidget->item(i, 4) && types_filters_list.contains(tableWidget->item(i, 4)->text())){
-            if (tableWidget->isRowHidden(i))
-                tableWidget->setRowHidden(i, false);
-        } else if(tableWidget->item(i, 5) && types_filters_list.contains(tableWidget->item(i, 5)->text())){
-            if (tableWidget->isRowHidden(i))
-                tableWidget->setRowHidden(i, false);
-        } else{
-            tableWidget->setRowHidden(i, true);
-        }
-}
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
-}
-//================================================private slots:====================================================================================================================================================
-
-<<<<<<< HEAD
 // ==================== фильтрация таблицы при измененении фильтров ====================
 
 void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
@@ -493,28 +421,15 @@ void MainWindow::TypeFilterTable(const QStringList& types_filters_list){
 }
 //================================================private slots:====================================================================================================================================================
 
-=======
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
 void MainWindow::expand_and_collapse_treeWidget(){
     if(treeWidget->width() > 60){
         //treeWidget->setColumnHidden(0, true);
         //treeWidget->setHeaderHidden(true);
         treeWidget->setMaximumWidth(25);
-<<<<<<< HEAD
-        check_all_filters_button->setHidden(true);
-        uncheck_all_filters_button->setHidden(true);
-        expand_button->setIcon(QIcon(":/right.png"));
-    } else{
-        treeWidget->setMaximumWidth(180);
-        check_all_filters_button->setHidden(false);
-        uncheck_all_filters_button->setHidden(false);
-        expand_button->setIcon(QIcon(":/left.jpg"));
-=======
         clean_filters_button->setHidden(true);
     } else{
         treeWidget->setMaximumWidth(180);
         clean_filters_button->setHidden(false);
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     }
 }
 
@@ -530,34 +445,8 @@ void MainWindow::on_pushButton_clicked()
     emit OpenFileClicked(filename);
 }
 
-<<<<<<< HEAD
-// кнопка "Отметить всё"
-void MainWindow::on_pushButton_check_all_clicked()
-{
-    disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*, int)));
-   // отмечаем все фильтры
-    for(int i = 0; i < treeWidget->topLevelItemCount(); i++){
-        for(int k = 0; k < treeWidget->topLevelItem(i)->childCount(); k++){
-            if(treeWidget->topLevelItem(i)->child(k)->checkState(0) == Qt::Unchecked){
-                treeWidget->topLevelItem(i)->child(k)->setCheckState(0, Qt::Checked);
-            }
-        }
-    }
-    for(int i = 0; i < tableWidget->rowCount(); i++){
-        if(tableWidget->isRowHidden(i))
-            tableWidget->setRowHidden(i, false);
-    }
-    emit Check_all_FiltersClicked(dateTimeEdit->dateTime(), dateTimeEdit_2->dateTime());
-    connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
-}
-
-/*
- * // кнопка "Очистить всё"
-void MainWindow::on_pushButton_clean_all_clicked()
-=======
 // кнопка "Очистить"
 void MainWindow::on_pushButton_clean_clicked()
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
 {
     disconnect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem* , int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*, int)));
    // отмечаем все фильтры
@@ -575,10 +464,6 @@ void MainWindow::on_pushButton_clean_clicked()
     emit CleanFiltersClicked(dateTimeEdit->dateTime(), dateTimeEdit_2->dateTime());
     connect(treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(ChangeTypeFilters(QTreeWidgetItem*,int)));
 }
-<<<<<<< HEAD
-*/
-=======
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
 
 // кнопка "Сбросить"
 void MainWindow::on_pushButton_2_clicked()

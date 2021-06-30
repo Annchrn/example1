@@ -14,11 +14,7 @@ public:
 private slots:
     // контроллер обрабатывает данные из лог-файла, принимает ссылку на считанный вектор структур
     void OpenFileChicked_handler(const QString& filename);
-<<<<<<< HEAD
-    void Check_all_FiltersClicked_handler(const QDateTime&,const QDateTime&);
-=======
     void CleanFiltersClicked_handler(const QDateTime&,const QDateTime&);
->>>>>>> 637613c7b49ca842e3bc63e1611c9443b29252cf
     void RestoreDataRange_handler();
     void FiltersChanged_handler(const QStringList& types_filters_list, const QDateTime& begining,const QDateTime& ending); // при изменении фильтров "Уровень сообщения"
     void DateTimeChanged_handler(QDateTime&, QDateTime&);
